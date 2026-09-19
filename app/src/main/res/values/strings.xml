@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">TokenWatch</string>
+    <string name="widget_session_name">Current session</string>
+    <string name="widget_session_description">Current session usage for Claude, Codex and Gemini</string>
+    <string name="widget_weekly_name">Weekly</string>
+    <string name="widget_weekly_description">Weekly usage for Claude, Codex and Gemini</string>
+</resources>

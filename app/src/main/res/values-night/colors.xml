@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home-screen widgets; values mirror the app's dark theme. -->
+    <color name="widget_background">#FF191B22</color>
+    <color name="widget_text">#FFE3E2E9</color>
+    <color name="widget_track">#FF32353C</color>
+    <color name="widget_error">#FFFFB4AB</color>
+</resources>

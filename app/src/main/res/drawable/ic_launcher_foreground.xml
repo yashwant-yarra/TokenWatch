@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TokenWatch mark: an open ring, 75% of a usage donut, gap at top right. Centre (54,54), radius 18. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- From 3 o'clock clockwise round to 12 o'clock -->
+    <path
+        android:pathData="M72,54 A18,18 0 1 1 54,36"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round" />
+</vector>

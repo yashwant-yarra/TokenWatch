@@ -1,0 +1,68 @@
+// Runs the extraction script in UsagePageSpec.kt against fake provider pages.
+// Usage: node app/src/test/js/extractionScript.test.js app/src/main/java/com/tokenwatch/data/web/UsagePageSpec.kt
+const fs = require("fs");
+const kt = fs.readFileSync(process.argv[2], "utf8");
+const tpl = kt.split("private fun extractionScript(")[1].split(') = """')[1].split('""".trimIndent()')[0];
+// Fills the Kotlin string templates the way Kotlin would: "\\b" in Kotlin source is \b in JS.
+const fill = (e, value) => value ? e.replace(/\\\\/g, "\\").replace(/\$it/g, value) : "null";
+const script = (sel, pat, plan, headingPlan) => tpl
+  .replace(/\$\{planPattern\?\.let \{ "(.*)" \} \?: "null"\}/, (_, e) => fill(e, plan))
+  .replace(/\$\{headingPlanPattern\?\.let \{ "(.*)" \} \?: "null"\}/, (_, e) => fill(e, headingPlan))
+  .replace(/\$\{'\$'\}/g, "$").replace(/\$selector/g, sel).replace(/\$labelPattern/g, pat);
+
+let body;
+const el = (tag, ...kids) => {
+  const n = { tag, kids, parentElement: null };
+  kids.forEach(k => typeof k === "object" && (k.parentElement = n));
+  Object.defineProperty(n, "innerText", { get: () => kids.map(k => typeof k === "string" ? k : k.innerText).join("\n") });
+  return n;
+};
+const all = (n, tag, out = []) => { if (n.tag === tag) out.push(n); n.kids.forEach(k => typeof k === "object" && all(k, tag, out)); return out; };
+const run = (root, sel, pat, plan, headingPlan) => {
+  body = root;
+  global.document = { body, querySelectorAll: s => all(body, s) };
+  return JSON.parse(eval(script(sel, pat, plan, headingPlan)));
+};
+module.exports = { el, run };
+if (require.main === module) {
+  const assert = require("assert");
+  const now = Date.now();
+  // Claude: session not started yet (no reset line), weekly with a reset.
+  const claude = el("body", el("main",
+    el("section", el("div", "Plan usage limits", "Pro"), el("div", "Current session", "Starts when a message is sent", "0% used")),
+    el("section", el("div", "Weekly limits", "Learn more about usage limits"), el("div", "All models", "Resets Tue 11:00 PM", "20% used")),
+  ));
+  const c = run(claude, "section", "current session|weekly", "Pro|Max");
+  console.log(JSON.stringify(c));
+  const session = c.windows.find(w => w.label === "Current session");
+  const weekly = c.windows.find(w => w.label === "Weekly");
+  assert.equal(session.percent, 0); assert.equal(session.resetsAt, null, "session must not borrow the weekly reset");
+  assert.equal(weekly.percent, 20); assert.ok(weekly.resetsAt);
+  // Claude: session in progress.
+  const c2 = run(el("body", el("main",
+    el("section", el("div", "Current session", "Resets in 4 hr 12 min", "12% used")),
+    el("section", el("div", "Weekly limits"), el("div", "All models", "Resets Tue 11:00 PM", "20% used")),
+  )), "section", "current session|weekly", "Pro|Max");
+  const s2 = c2.windows.find(w => w.label === "Current session");
+  assert.equal(s2.percent, 12);
+  assert.ok(Math.abs(Date.parse(s2.resetsAt) - (now + (4 * 60 + 12) * 60000)) < 5000);
+  // Gemini: month-day reset without a year lands within the next year, not a year late.
+  const g = run(el("body", el("div", el("p", "Weekly limit"), el("p", "0% used"), el("p", "Resets Sep 24 4:37 PM"))), "p", "current usage|weekly limit");
+  const gw = g.windows[0];
+  console.log(JSON.stringify(g));
+  const days = (Date.parse(gw.resetsAt) - now) / 864e5;
+  assert.ok(days > 0 && days < 366, "reset " + gw.resetsAt + " should be within a year");
+  assert.ok(days < 30, "Sep 24 from Sep 18 is days away, got " + gw.resetsAt);
+  // Gemini: the plan badge under "Usage limits" is read and shown as "Pro"; an upsell banner is not a plan.
+  const geminiPlan = "usage limits\\s+(pro|ultra|plus)\\b"; // Same pattern as UsagePageSpec's Gemini entry.
+  const gp = run(el("body", el("div", el("h1", "Usage limits"), el("span", "PRO")),
+    el("div", el("p", "Current usage"), el("p", "0% used"), el("p", "Resets at 3:07 AM"))), "p", "current usage|weekly limit", null, geminiPlan);
+  assert.equal(gp.planName, "Pro");
+  const free = run(el("body", el("div", el("h1", "Usage limits"), el("span", "Upgrade to Pro")),
+    el("div", el("p", "Current usage"), el("p", "0% used"), el("p", "Resets at 3:07 AM"))), "p", "current usage|weekly limit", null, geminiPlan);
+  assert.equal(free.planName, null);
+  // Claude: plan read from its quota block.
+  assert.equal(run(el("body", el("section", el("div", "Plan usage limits", "Max"), el("div", "Current session", "Resets in 1 hr", "5% used"))),
+    "section", "current session|weekly", "Pro|Max").planName, "Max");
+  console.log("OK");
+}
