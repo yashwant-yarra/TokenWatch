@@ -62,12 +62,15 @@ if (require.main === module) {
   assert.equal(w3.percent, 1);
   assert.equal(new Date(w3.resetsAt).getDay(), 3, "resets on a Wednesday");
   // Gemini: month-day reset without a year lands within the next year, not a year late.
-  const g = run(el("body", el("div", el("p", "Weekly limit"), el("p", "0% used"), el("p", "Resets Sep 24 4:37 PM"))), "p", "current usage|weekly limit");
+  // Six days from today, written the way Gemini does ("Sep 24 4:37 PM"), so the test holds on any date.
+  const soon = new Date(now + 6 * 864e5);
+  const soonText = soon.toLocaleDateString("en-US", {month: "short", day: "numeric"}) + " 4:37 PM";
+  const g = run(el("body", el("div", el("p", "Weekly limit"), el("p", "0% used"), el("p", "Resets " + soonText))), "p", "current usage|weekly limit");
   const gw = g.windows[0];
   console.log(JSON.stringify(g));
   const days = (Date.parse(gw.resetsAt) - now) / 864e5;
   assert.ok(days > 0 && days < 366, "reset " + gw.resetsAt + " should be within a year");
-  assert.ok(days < 30, "Sep 24 from Sep 18 is days away, got " + gw.resetsAt);
+  assert.ok(days < 30, soonText + " is days away, got " + gw.resetsAt);
   // Gemini: the plan badge under "Usage limits" is read and shown as "Pro"; an upsell banner is not a plan.
   const geminiPlan = "usage limits\\s+(pro|ultra|plus)\\b"; // Same pattern as UsagePageSpec's Gemini entry.
   const gp = run(el("body", el("div", el("h1", "Usage limits"), el("span", "PRO")),
