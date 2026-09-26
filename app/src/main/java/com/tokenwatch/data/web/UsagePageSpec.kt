@@ -33,7 +33,8 @@ data class UsagePageSpec(
                 provider,
                 "https://claude.ai/settings/usage",
                 setOf("claude.ai", "auth.anthropic.com", "accounts.google.com", "appleid.apple.com"),
-                extractionScript("section", "current session|weekly", "Pro|Max"),
+                // The plan ("Pro") sits under the "Your usage" heading, outside the quota block.
+                extractionScript("section", "current session|weekly|this week", "Pro|Max", headingPlanPattern = "your usage\\s+(pro|max)\\b"),
             )
             AiProvider.CODEX -> UsagePageSpec(
                 provider,
@@ -71,7 +72,7 @@ data class UsagePageSpec(
                   const minutes = Number(relative?.[1] || 0) * 60 + Number(relative?.[2] || 0);
                   if (minutes) return new Date(Date.now() + minutes * 60000).toISOString();
                 }
-                const normalized = text.replace(/\bat\b/i, " ");
+                const normalized = text.replace(/\bat\b/i, " ").trim();
                 let parsed = Date.parse(normalized);
                 if (!Number.isNaN(parsed)) {
                   if (!/\d{4}/.test(normalized)) {
@@ -83,7 +84,7 @@ data class UsagePageSpec(
                   }
                   return new Date(parsed).toISOString();
                 }
-                const time = normalized.match(/^(?:(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+)?(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+                const time = normalized.match(/^(?:(Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+)?(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
                 if (!time) return null;
                 const now = new Date();
                 const result = new Date(now);
@@ -111,26 +112,18 @@ data class UsagePageSpec(
                   return null;
                 })
                 .filter(Boolean);
-              const labelPattern = /current session|current usage|5[ -]hour(?: usage limit)?|weekly(?: usage)? limit|weekly/i;
+              const labelPattern = /current session|current usage|5[ -]hour(?: usage limit)?|weekly(?: usage)? limit|weekly|this week/gi;
               // A block can hold several windows, so read each window's values only from the text between
               // its label and the next label. Otherwise one window picks up another's percent or reset.
-              const section = (text, label) => {
-                const rest = text.slice(text.toLowerCase().indexOf(label.toLowerCase()) + label.length);
-                const next = rest.search(labelPattern);
-                return next < 0 ? rest : rest.slice(0, next);
-              };
-              const blocks = [];
-              candidates
-                .map(item => ({...item, label: item.text.match(labelPattern)?.[0]}))
-                .sort((a, b) => a.text.length - b.text.length)
-                .forEach(item => {
-                  if (item.label && !blocks.some(block => block.label.toLowerCase() === item.label.toLowerCase())) blocks.push(item);
-                });
-              const windows = blocks.map(block => {
-                const label = block.label;
-                const text = section(block.text, label);
+              // Smallest blocks first, so a window is read from the tightest block that holds it.
+              const blocks = [...new Map(candidates.map(item => [item.node, item])).values()]
+                .sort((a, b) => a.text.length - b.text.length);
+              const windows = blocks.flatMap(block => {
+                const labels = [...block.text.matchAll(labelPattern)];
+                return labels.map((match, i) => ({label: match[0], text: block.text.slice(match.index + match[0].length, labels[i + 1]?.index ?? block.text.length)}));
+              }).map(({label, text}) => {
                 const percent = text.match(/(\d+(?:\.\d+)?)\s*%\s*(used|remaining)/i);
-                const resetText = text.match(/resets?\s+(?:in\s+\d+\s*h(?:r|ours?)?\s*(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
+                const resetText = text.match(/resets?\s+(?:in\s+\d+\s*h(?:r|ours?)?\s*(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
                 return {
                   windowId: label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_${'$'}/g, ""),
                   label: /week/i.test(label) ? "Weekly" : "Current session",
@@ -140,7 +133,7 @@ data class UsagePageSpec(
                   resetsAt: resetInstant(resetText)
                 };
               }).filter(window => window.percent !== null);
-              const uniqueWindows = [...new Map(windows.map(window => [window.windowId, window])).values()];
+              const uniqueWindows = windows.filter((window, i) => windows.findIndex(other => other.windowId === window.windowId) === i);
               const rawPlan = ${planPattern?.let { "candidates.map(item => item.text.match(/\\b($it)\\b/i)?.[0]).find(Boolean)" } ?: "null"} ||
                 ${headingPlanPattern?.let { "clean(document.body.innerText).match(/$it/i)?.[1]" } ?: "null"};
               // Pages write the plan as "PRO" or "Pro"; show it one way.

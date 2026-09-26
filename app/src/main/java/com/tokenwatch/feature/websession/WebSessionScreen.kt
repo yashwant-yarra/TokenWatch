@@ -113,7 +113,8 @@ private fun UsageWebView(
     val usageHost = remember(spec) { Uri.parse(spec.url).host }
     val webView = remember(spec.provider) { WebView(context) }
     var blockedHost by remember { mutableStateOf<String?>(null) }
-    var pageHost by remember { mutableStateOf<String?>(null) }
+    var pageUrl by remember { mutableStateOf<String?>(null) }
+    val pageHost = pageUrl?.let { Uri.parse(it).host }
 
     DisposableEffect(webView) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -139,7 +140,7 @@ private fun UsageWebView(
                 webView.apply {
                     configureForUsagePage(spec, onBlocked = { blockedHost = it }, onAllowedPageStarted = {
                         blockedHost = null
-                        pageHost = Uri.parse(it).host
+                        pageUrl = it
                     })
                     loadUrl(spec.signInUrl)
                 }
@@ -151,6 +152,7 @@ private fun UsageWebView(
                 blockedHost?.let { "This sign-in option opens $it, which this app doesn't allow. Choose another way to sign in." }
                     ?: state.message
                     ?: GOOGLE_HINT.takeIf { pageHost == GOOGLE_HOST && usageHost != GEMINI_HOST }
+                    ?: CLAUDE_EMAIL_HINT.takeIf { pageUrl?.startsWith(CLAUDE_LOGIN_URL) == true }
                     ?: "Sign in and open the usage page. Usage is saved automatically once it appears.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -233,6 +235,13 @@ private const val GEMINI_HOST = "gemini.google.com"
 // honestly worked around. Email sign-in reaches the same account.
 private const val GOOGLE_HINT = "If Google says this browser or app isn't secure, go back and choose " +
     "\"Continue with email\" with the same address."
+
+private const val CLAUDE_LOGIN_URL = "https://claude.ai/login"
+
+// Claude's email sign-in link opens in the phone's browser, not this web view, so signing in there
+// never reaches the app. Opened elsewhere, the link shows a code that Claude's page here accepts.
+private const val CLAUDE_EMAIL_HINT = "Claude's email link opens in your browser, not here. Open it " +
+    "there, copy the verification code it shows, and enter it on this page."
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this

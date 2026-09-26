@@ -46,6 +46,21 @@ if (require.main === module) {
   const s2 = c2.windows.find(w => w.label === "Current session");
   assert.equal(s2.percent, 12);
   assert.ok(Math.abs(Date.parse(s2.resetsAt) - (now + (4 * 60 + 12) * 60000)) < 5000);
+  // Claude (settings dialog, 2026-09): both windows in one block after a summary line, weekly labeled
+  // "This week" with a full weekday, plan under the "Your usage" heading.
+  const c3 = run(el("body", el("div", el("h2", "Your usage"), el("span", "Pro"),
+    el("section", "Fresh week. 1% of your weekly limit used.", el("div", "Current session", "Resets at 3:00 PM", "4% used"),
+      el("div", "This week", "Resets Wednesday 4:30 AM", "1% used")))),
+    "section", "current session|weekly|this week", "Pro|Max", "your usage\\s+(pro|max)\\b");
+  console.log(JSON.stringify(c3));
+  assert.equal(c3.planName, "Pro");
+  assert.equal(c3.windows.length, 2);
+  const s3 = c3.windows.find(w => w.label === "Current session");
+  assert.equal(s3.percent, 4);
+  assert.equal(new Date(s3.resetsAt).getMinutes(), 0, "\"Resets at 3:00 PM\" is read");
+  const w3 = c3.windows.find(w => w.label === "Weekly");
+  assert.equal(w3.percent, 1);
+  assert.equal(new Date(w3.resetsAt).getDay(), 3, "resets on a Wednesday");
   // Gemini: month-day reset without a year lands within the next year, not a year late.
   const g = run(el("body", el("div", el("p", "Weekly limit"), el("p", "0% used"), el("p", "Resets Sep 24 4:37 PM"))), "p", "current usage|weekly limit");
   const gw = g.windows[0];
