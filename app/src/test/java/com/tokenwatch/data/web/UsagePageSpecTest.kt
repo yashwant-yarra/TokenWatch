@@ -21,7 +21,7 @@ class UsagePageSpecTest {
     fun `Codex starts on the usage page`() {
         val spec = UsagePageSpec.forProvider(AiProvider.CODEX)
         assertEquals(
-            "https://chatgpt.com/codex/cloud/settings/usage",
+            "https://chatgpt.com/settings/usage?tab=overview",
             spec.url,
         )
         assertTrue(spec.allows("https://device.auth.openai.com/authorize"))

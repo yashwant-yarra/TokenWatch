@@ -79,6 +79,19 @@ if (require.main === module) {
   const free = run(el("body", el("div", el("h1", "Usage limits"), el("span", "Upgrade to Pro")),
     el("div", el("p", "Current usage"), el("p", "0% used"), el("p", "Resets at 3:07 AM"))), "p", "current usage|weekly limit", null, geminiPlan);
   assert.equal(free.planName, null);
+  // Codex (chatgpt.com/settings/usage, 2026-10): div blocks, "% left", resets in days and hours.
+  const codexPage = el("body", el("main", el("section", el("div", "Plan limits", "Shared across Codex, Work, Workspace Agents, and ChatGPT for Excel."),
+    el("div", el("div", el("div", "5-hour limit"), "Resets in 5h 0m", "100% left"), el("div", el("div", "Weekly limit"), "Resets in 5d 18h", "93% left"))),
+    el("section", el("div", "Recent plan usage"), el("div", "5-hour", "Weekly", "100%"))));
+  const x = run(codexPage, "div", "5-hour limit|weekly limit");
+  console.log(JSON.stringify(x));
+  assert.equal(x.windows.length, 2);
+  const xs = x.windows.find(w => w.label === "Current session");
+  const xw = x.windows.find(w => w.label === "Weekly");
+  assert.equal(xs.percent, 100); assert.equal(xs.percentMeaning, "REMAINING");
+  assert.ok(Math.abs(Date.parse(xs.resetsAt) - (now + 5 * 3600000)) < 5000);
+  assert.equal(xw.percent, 93); assert.equal(xw.percentMeaning, "REMAINING");
+  assert.ok(Math.abs(Date.parse(xw.resetsAt) - (now + (5 * 24 + 18) * 3600000)) < 5000, "\"in 5d 18h\" is read: " + xw.resetsAt);
   // Claude: plan read from its quota block.
   assert.equal(run(el("body", el("section", el("div", "Plan usage limits", "Max"), el("div", "Current session", "Resets in 1 hr", "5% used"))),
     "section", "current session|weekly", "Pro|Max").planName, "Max");

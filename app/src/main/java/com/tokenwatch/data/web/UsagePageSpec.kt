@@ -38,14 +38,16 @@ data class UsagePageSpec(
             )
             AiProvider.CODEX -> UsagePageSpec(
                 provider,
-                "https://chatgpt.com/codex/cloud/settings/usage",
+                // Codex limits moved here in 2026-10 (the old /codex/cloud/settings/usage redirects to it).
+                "https://chatgpt.com/settings/usage?tab=overview",
                 // All of openai.com: sign-in passes through several of its subdomains, and blocking any of
                 // them stalls the flow. ChatGPT's sign-in page also offers Google and Apple.
                 setOf("chatgpt.com", "openai.com", "accounts.google.com", "appleid.apple.com"),
-                extractionScript("article", "5 hour|5-hour|weekly"),
+                // Each limit is a div block: "5-hour limit / Resets in 5h 0m / 100% left".
+                extractionScript("div", "5[ -]hour limit|weekly limit"),
                 // Signed out, the usage page falls back to the ChatGPT home page instead of login,
                 // so sign-in starts at login and returns to usage afterwards.
-                signInUrl = "https://chatgpt.com/auth/login?next=%2Fcodex%2Fcloud%2Fsettings%2Fusage",
+                signInUrl = "https://chatgpt.com/auth/login?next=%2Fsettings%2Fusage%3Ftab%3Doverview",
             )
             AiProvider.GEMINI -> UsagePageSpec(
                 provider,
@@ -67,9 +69,9 @@ data class UsagePageSpec(
               const clean = value => (value || "").replace(/\s+/g, " ").trim();
               const resetInstant = value => {
                 const text = clean(value).replace(/^resets?\s+/i, "");
-                const relative = text.match(/^in\s+(?:(\d+)\s*h(?:r|ours?)?)?\s*(?:(\d+)\s*m(?:in(?:utes?)?)?)?/i);
+                const relative = text.match(/^in\s+(?:(\d+)\s*d(?:ays?)?)?\s*(?:(\d+)\s*h(?:r|ours?)?)?\s*(?:(\d+)\s*m(?:in(?:utes?)?)?)?/i);
                 if (relative?.[0]?.trim() !== "in") {
-                  const minutes = Number(relative?.[1] || 0) * 60 + Number(relative?.[2] || 0);
+                  const minutes = (Number(relative?.[1] || 0) * 24 + Number(relative?.[2] || 0)) * 60 + Number(relative?.[3] || 0);
                   if (minutes) return new Date(Date.now() + minutes * 60000).toISOString();
                 }
                 const normalized = text.replace(/\bat\b/i, " ").trim();
@@ -104,7 +106,7 @@ data class UsagePageSpec(
                   let current = node;
                   while (current && current !== document.body) {
                     const text = clean(current.innerText);
-                    if (text.length <= 500 && /\d+(?:\.\d+)?\s*%\s*(used|remaining)/i.test(text) && /resets?/i.test(text)) {
+                    if (text.length <= 500 && /\d+(?:\.\d+)?\s*%\s*(used|remaining|left)/i.test(text) && /resets?/i.test(text)) {
                       return {node: current, text};
                     }
                     current = current.parentElement;
@@ -122,14 +124,14 @@ data class UsagePageSpec(
                 const labels = [...block.text.matchAll(labelPattern)];
                 return labels.map((match, i) => ({label: match[0], text: block.text.slice(match.index + match[0].length, labels[i + 1]?.index ?? block.text.length)}));
               }).map(({label, text}) => {
-                const percent = text.match(/(\d+(?:\.\d+)?)\s*%\s*(used|remaining)/i);
-                const resetText = text.match(/resets?\s+(?:in\s+\d+\s*h(?:r|ours?)?\s*(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
+                const percent = text.match(/(\d+(?:\.\d+)?)\s*%\s*(used|remaining|left)/i);
+                const resetText = text.match(/resets?\s+(?:in\s+(?:\d+\s*d(?:ays?)?\s*)?\d+\s*h(?:r|ours?)?\s*(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
                 return {
                   windowId: label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_${'$'}/g, ""),
                   label: /week/i.test(label) ? "Weekly" : "Current session",
                   windowType: /week/i.test(label) ? "WEEKLY" : "ROLLING_HOURS",
                   percent: percent ? Number(percent[1]) : null,
-                  percentMeaning: percent ? percent[2].toUpperCase() : "USED",
+                  percentMeaning: percent && !/used/i.test(percent[2]) ? "REMAINING" : "USED",
                   resetsAt: resetInstant(resetText)
                 };
               }).filter(window => window.percent !== null);
