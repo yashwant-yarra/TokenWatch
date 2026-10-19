@@ -34,7 +34,13 @@ data class UsagePageSpec(
                 "https://claude.ai/settings/usage",
                 setOf("claude.ai", "auth.anthropic.com", "accounts.google.com", "appleid.apple.com"),
                 // The plan ("Pro") sits under the "Your usage" heading, outside the quota block.
-                extractionScript("section", "current session|weekly|this week", "Pro|Max", headingPlanPattern = "your usage\\s+(pro|max)\\b"),
+                extractionScript(
+                    "section",
+                    "current session|weekly|this week",
+                    "Pro|Max",
+                    headingPlanPattern = "your usage\\s+(pro|max)\\b",
+                    accountScript = CLAUDE_ACCOUNT,
+                ),
             )
             AiProvider.CODEX -> UsagePageSpec(
                 provider,
@@ -65,7 +71,26 @@ data class UsagePageSpec(
         }
 
         // Account readers: a JS expression giving the signed-in email the page itself holds, or null.
-        // Claude's usage page doesn't show the address anywhere, so Claude has none.
+        // A reader may answer "pending" while it looks the address up; the reading then waits a poll.
+
+        // Claude's usage page doesn't show the address, but the account data its pages load does
+        // (/api/account, email_address). That lookup is asynchronous: the first poll starts it, and a
+        // later poll picks it up. After a few seconds without an answer the reading goes ahead without it.
+        private val CLAUDE_ACCOUNT = """
+            (() => {
+              const state = window.__tokenwatchAccount;
+              if (state === undefined) {
+                window.__tokenwatchAccount = { since: Date.now() };
+                fetch("/api/account", { credentials: "include" })
+                  .then(response => response.json())
+                  .then(account => { window.__tokenwatchAccount = { email: account.email_address || null }; })
+                  .catch(() => { window.__tokenwatchAccount = { email: null }; });
+                return "pending";
+              }
+              if (!("email" in state)) return Date.now() - state.since < 5000 ? "pending" : null;
+              return state.email;
+            })()
+        """
 
         // ChatGPT keeps the signed-in user in the page's own bootstrap JSON.
         private val CHATGPT_ACCOUNT = """
@@ -168,6 +193,8 @@ data class UsagePageSpec(
               const planName = rawPlan ? rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1).toLowerCase() : null;
               // Parenthesized so a reader starting on a new line isn't cut off by "return" (automatic semicolons).
               const accountLabel = (() => { try { return (${accountScript ?: "null"}); } catch (e) { return null; } })();
+              // The account is still being looked up: report nothing this poll, so the next one includes it.
+              if (accountLabel === "pending") return null;
               return JSON.stringify({schemaVersion: 1, planName, accountLabel, windows: uniqueWindows});
             })()
         """.trimIndent()

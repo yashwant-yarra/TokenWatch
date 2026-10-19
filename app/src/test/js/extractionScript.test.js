@@ -116,5 +116,25 @@ if (require.main === module) {
   assert.equal(run(geminiBlock, "p", "current usage|weekly limit", null, null, geminiAccount, label("Google Account: Dev Person")).accountLabel, null, "a label without an address gives no account");
   // Providers without an account reader report none.
   assert.equal(run(geminiBlock, "p", "current usage|weekly limit").accountLabel, null);
-  console.log("OK");
+  // Claude: the address comes from the page's own account data, which loads asynchronously. The first
+  // poll starts the lookup and holds the reading back; the next poll reports it with the address.
+  (async () => {
+    const claudeBlock = el("body", el("section", el("div", "Current session", "Resets in 1 hr", "5% used")));
+    const claudeAccount = accountReader("CLAUDE_ACCOUNT");
+    global.window = {};
+    global.fetch = async url => ({ json: async () => (url === "/api/account" ? { email_address: "dev@example.com" } : {}) });
+    const first = run(claudeBlock, "section", "current session|weekly", "Pro|Max", null, claudeAccount);
+    assert.equal(first, null, "first poll waits for the account lookup");
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(run(claudeBlock, "section", "current session|weekly", "Pro|Max", null, claudeAccount).accountLabel, "dev@example.com");
+    // A failed lookup doesn't block the reading.
+    global.window = {};
+    global.fetch = async () => { throw new Error("offline"); };
+    run(claudeBlock, "section", "current session|weekly", "Pro|Max", null, claudeAccount);
+    await new Promise(r => setTimeout(r, 0));
+    const after = run(claudeBlock, "section", "current session|weekly", "Pro|Max", null, claudeAccount);
+    assert.equal(after.accountLabel, null);
+    assert.equal(after.windows.length, 1);
+    console.log("OK");
+  })().catch(e => { console.error(e); process.exit(1); });
 }

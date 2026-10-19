@@ -2,6 +2,7 @@ package com.tokenwatch.feature.connections
 
 import com.tokenwatch.core.ui.components.LocalBottomBarPadding
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -95,10 +96,13 @@ fun ConnectionsContent(
                     }
                 }
                 item {
+                    Rule()
+                }
+                item {
                     InfoNote(
                         "Connecting opens the provider's own sign-in page inside this app. " +
                             "Passwords and web sessions stay in the private web view.",
-                        Modifier.padding(horizontal = 8.dp),
+                        Modifier.padding(top = 16.dp),
                     )
                 }
             }
@@ -159,14 +163,15 @@ private fun ConnectionCard(
                     role = Role.Button,
                     onClickLabel = if (disconnected) "Connect $name" else "Manage $name",
                 ) { if (disconnected) onConnect() else onManage() }
-                .padding(top = 16.dp, bottom = if (disconnected || lapsed) 16.dp else 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(top = 18.dp, bottom = if (disconnected || lapsed) 18.dp else 0.dp),
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ProviderMark(connection.provider, size = 26.dp)
-            Column(Modifier.weight(1f)) {
+            Box(Modifier.padding(top = 1.dp)) { ProviderMark(connection.provider, size = 24.dp) }
+            // Name, address and status read as one tight group.
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(name, style = MaterialTheme.typography.titleLarge)
-                // The signed-in address, when the provider's page shows one (Claude's doesn't).
+                // The signed-in address, when the provider's page holds one.
                 connection.accountLabel?.let {
                     Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -180,12 +185,12 @@ private fun ConnectionCard(
                     color = if (lapsed) MaterialTheme.colorScheme.error else muted,
                 )
                 if (!disconnected && !lapsed) {
-                    // Sign out stays with its account, under the status line.
+                    // Sign out stays with its account. Quiet plates carry their own inset (and a 48dp
+                    // target); pull it back so the label meets the text edge and sits close under the status.
                     PlateButton(
                         "Sign out",
                         onDisconnect,
-                        // Quiet plates carry their own inset; pull it back so the label meets the text edge.
-                        Modifier.offset(x = (-12).dp),
+                        Modifier.offset(x = (-12).dp, y = (-8).dp),
                         style = PlateStyle.QUIET,
                         color = muted,
                     )
@@ -193,7 +198,7 @@ private fun ConnectionCard(
             }
             // The account's live glasses, dashed when its sign-in has lapsed.
             if (!disconnected && snapshot.quotaWindows.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     snapshot.quotaWindows.sortedBy { it.windowType }.forEach { window ->
                         SandGlass(
                             leftPercent = window.leftPercent,
@@ -205,7 +210,7 @@ private fun ConnectionCard(
                     }
                 }
             }
-            GlyphIcon(Glyph.CHEVRON, tint = muted, size = 20.dp)
+            GlyphIcon(Glyph.CHEVRON, tint = muted, size = 20.dp, modifier = Modifier.padding(top = 9.dp))
         }
         snapshot.lastFailure?.let { ErrataSlip(connection.provider, it, now, Modifier.padding(bottom = 12.dp)) }
         when {
