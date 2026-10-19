@@ -60,6 +60,7 @@ import com.tokenwatch.core.ui.components.Section
 import com.tokenwatch.core.ui.components.TopLevelBar
 import com.tokenwatch.core.ui.components.rememberHaptics
 import com.tokenwatch.domain.model.AppSettings
+import com.tokenwatch.feature.tile.UsageTile
 import com.tokenwatch.domain.model.ThemeMode
 
 @Composable
@@ -187,8 +188,23 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
             }
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            item {
+                Arrive(3) {
+                    Section(title = "Quick Settings") {
+                        Text(
+                            "A tile with the limit closest to running out. Tap it to re-read.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        PlateButton("Add tile", { UsageTile.requestAdd(context) }, Modifier.fillMaxWidth(), style = PlateStyle.OUTLINE)
+                    }
+                }
+            }
+        }
+
         item {
-            Arrive(3) {
+            Arrive(4) {
                 Section(title = "Your data") {
                     PlateButton("Delete cached usage", { confirm = "history" }, Modifier.fillMaxWidth(), style = PlateStyle.OUTLINE)
                 }

@@ -2,6 +2,7 @@ package com.tokenwatch
 
 import android.app.Application
 import com.tokenwatch.domain.repository.UsageRepository
+import com.tokenwatch.feature.tile.UsageTile
 import com.tokenwatch.feature.widget.UsageWidgets
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -19,7 +20,10 @@ class TokenWatchApp : Application() {
         super.onCreate()
         // Every usage write (sign-in, pull to refresh, background refresh) lands in Room, so one observer keeps widgets current.
         usageRepository.snapshots
-            .onEach { UsageWidgets.updateAll(this, it) }
+            .onEach {
+                UsageWidgets.updateAll(this, it)
+                UsageTile.requestUpdate(this)
+            }
             .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.Default))
     }
 }

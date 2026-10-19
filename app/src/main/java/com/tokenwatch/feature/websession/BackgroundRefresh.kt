@@ -78,24 +78,31 @@ class UsageRefreshWorker(context: Context, params: WorkerParameters) : Coroutine
 
     override suspend fun doWork(): Result {
         val deps = EntryPointAccessors.fromApplication(applicationContext, UsageRefreshWorkerEntryPoint::class.java)
-        val repository = deps.usageRepository()
         try {
-            val connected = repository.snapshots.first()
-                .filter { it.connection.status == ConnectionStatus.CONNECTED }
-                .map { it.provider }
-            connected.forEach { provider ->
-                val failure = withContext(Dispatchers.Main) {
-                    readInvisibleWebView(applicationContext, provider) { payload ->
-                        runCatching { repository.saveWebPayload(provider, payload) }.isSuccess
-                    }
-                }
-                if (failure == UsageFailure.AuthExpired) repository.finishRefresh(provider, failure)
-            }
+            readConnectedProviders(applicationContext, deps.usageRepository())
         } finally {
             // Always queue the next run, even after a failure, so the chain never stops by itself.
             BackgroundRefresh.scheduleNext(applicationContext, deps.settingsRepository().settings.first().refreshIntervalMinutes)
         }
         return Result.success()
+    }
+}
+
+/**
+ * Reads every connected provider in turn, in web views that are never shown. Only sign-outs are
+ * recorded as failures: a page that is merely slow in the background shouldn't put an error on the dashboard.
+ */
+internal suspend fun readConnectedProviders(context: Context, repository: UsageRepository) {
+    val connected = repository.snapshots.first()
+        .filter { it.connection.status == ConnectionStatus.CONNECTED }
+        .map { it.provider }
+    connected.forEach { provider ->
+        val failure = withContext(Dispatchers.Main) {
+            readInvisibleWebView(context, provider) { payload ->
+                runCatching { repository.saveWebPayload(provider, payload) }.isSuccess
+            }
+        }
+        if (failure == UsageFailure.AuthExpired) repository.finishRefresh(provider, failure)
     }
 }
 
