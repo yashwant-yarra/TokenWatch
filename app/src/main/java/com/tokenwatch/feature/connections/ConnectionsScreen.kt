@@ -9,16 +9,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,13 +24,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tokenwatch.core.ui.components.FailureBanner
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.semantics.Role
+import com.tokenwatch.core.ui.components.Glyph
+import com.tokenwatch.core.ui.components.GlyphIcon
+import com.tokenwatch.core.ui.components.Rule
+import com.tokenwatch.core.ui.components.SandGlass
+import com.tokenwatch.core.ui.components.leftPercent
+import com.tokenwatch.core.ui.theme.ProviderColors
+import com.tokenwatch.core.ui.components.Arrive
+import com.tokenwatch.core.ui.components.BenchDialog
+import com.tokenwatch.core.ui.components.ErrataSlip
+import com.tokenwatch.core.ui.components.PlateButton
+import com.tokenwatch.core.ui.components.PlateStyle
 import com.tokenwatch.core.ui.components.InfoNote
-import com.tokenwatch.core.ui.components.LabelValueRow
 import com.tokenwatch.core.ui.components.TopLevelBar
 import com.tokenwatch.core.ui.components.LoadingState
-import com.tokenwatch.core.ui.components.ProviderAvatar
-import com.tokenwatch.core.ui.components.SectionCard
+import com.tokenwatch.core.ui.components.ProviderMark
 import com.tokenwatch.core.ui.components.connectionLabel
 import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AiProvider
@@ -73,17 +79,19 @@ fun ConnectionsContent(
             ConnectionsUiState.Loading -> LoadingState(Modifier.padding(padding))
             is ConnectionsUiState.Content -> LazyColumn(
                 modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp + LocalBottomBarPadding.current),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp + LocalBottomBarPadding.current),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                items(state.connections, key = { it.provider.name }) { snapshot ->
-                    ConnectionCard(
-                        snapshot = snapshot,
-                        now = state.now,
-                        onConnect = { connecting = snapshot.provider },
-                        onDisconnect = { disconnecting = snapshot.provider },
-                        onManage = { onManage(snapshot.provider) },
-                    )
+                itemsIndexed(state.connections, key = { _, it -> it.provider.name }) { index, snapshot ->
+                    Arrive(index) {
+                        ConnectionCard(
+                            snapshot = snapshot,
+                            now = state.now,
+                            onConnect = { connecting = snapshot.provider },
+                            onDisconnect = { disconnecting = snapshot.provider },
+                            onManage = { onManage(snapshot.provider) },
+                        )
+                    }
                 }
                 item {
                     InfoNote(
@@ -97,37 +105,28 @@ fun ConnectionsContent(
     }
 
     connecting?.let { provider ->
-        AlertDialog(
-            onDismissRequest = { connecting = null },
-            title = { Text("Connect ${provider.displayName}") },
-            text = {
-                Text(
-                    "Sign in to ${provider.displayName} inside this app. " +
-                        "Your password and session stay in the private web view.",
-                )
+        BenchDialog(
+            title = "Connect ${provider.displayName}",
+            text = "Sign in to ${provider.displayName} inside this app. Your password and session stay in the private web view.",
+            confirmLabel = "Connect",
+            onConfirm = {
+                connecting = null
+                onConnect(provider)
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    connecting = null
-                    onConnect(provider)
-                }) { Text("Connect") }
-            },
-            dismissButton = { TextButton(onClick = { connecting = null }) { Text("Cancel") } },
+            onDismiss = { connecting = null },
         )
     }
 
     disconnecting?.let { provider ->
-        AlertDialog(
-            onDismissRequest = { disconnecting = null },
-            title = { Text("Sign out of ${provider.displayName}?") },
-            text = { Text("You're signed out of ${provider.displayName} in this app and its cached usage is removed from this device.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    disconnecting = null
-                    onDisconnect(provider)
-                }) { Text("Sign out") }
+        BenchDialog(
+            title = "Sign out of ${provider.displayName}?",
+            text = "You're signed out of ${provider.displayName} in this app and its cached usage is removed from this device.",
+            confirmLabel = "Sign out",
+            onConfirm = {
+                disconnecting = null
+                onDisconnect(provider)
             },
-            dismissButton = { TextButton(onClick = { disconnecting = null }) { Text("Cancel") } },
+            onDismiss = { disconnecting = null },
         )
     }
 }
@@ -141,53 +140,77 @@ private fun ConnectionCard(
     onManage: () -> Unit,
 ) {
     val connection = snapshot.connection
-    SectionCard(title = null) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ProviderAvatar(connection.provider)
+    val name = connection.provider.displayName
+    val disconnected = connection.status == ConnectionStatus.DISCONNECTED
+    val lapsed = connection.status == ConnectionStatus.EXPIRED ||
+        connection.status == ConnectionStatus.REVOKED ||
+        connection.status == ConnectionStatus.ERROR
+    val supported = connection.integrationStatus != IntegrationStatus.NOT_YET_SUPPORTED
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(Modifier.fillMaxWidth()) {
+        Rule()
+        // The whole row opens the provider, like the shelves on the Usage tab.
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = !disconnected || supported,
+                    role = Role.Button,
+                    onClickLabel = if (disconnected) "Connect $name" else "Manage $name",
+                ) { if (disconnected) onConnect() else onManage() }
+                .padding(top = 16.dp, bottom = if (disconnected || lapsed) 16.dp else 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ProviderMark(connection.provider, size = 26.dp)
             Column(Modifier.weight(1f)) {
-                Text(connection.provider.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(name, style = MaterialTheme.typography.titleLarge)
                 Text(
-                    connectionLabel(connection.status),
+                    listOfNotNull(
+                        connectionLabel(connection.status),
+                        connection.planName,
+                        connection.accountLabel,
+                        connection.lastSyncedAt?.let { "read ${Format.ago(it, now)}" },
+                    ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (connection.status == ConnectionStatus.CONNECTED) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color = if (lapsed) MaterialTheme.colorScheme.error else muted,
                 )
-            }
-        }
-
-        // Details sit close together as one group under the header.
-        val details = listOfNotNull(
-            connection.planName?.let { "Plan" to it },
-            connection.accountLabel?.let { "Account" to it },
-            connection.lastSyncedAt?.let { "Updated" to Format.ago(it, now) },
-        )
-        if (details.isNotEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                details.forEach { (label, value) -> LabelValueRow(label, value) }
-            }
-        }
-        snapshot.lastFailure?.let { FailureBanner(connection.provider, it, now) }
-
-        val signOutColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            when (connection.status) {
-                ConnectionStatus.CONNECTED -> {
-                    OutlinedButton(onClick = onManage, modifier = Modifier.weight(1f)) { Text("Manage") }
-                    TextButton(onClick = onDisconnect, modifier = Modifier.weight(1f), colors = signOutColors) { Text("Sign out") }
+                if (!disconnected && !lapsed) {
+                    // Sign out stays with its account, under the status line.
+                    PlateButton(
+                        "Sign out",
+                        onDisconnect,
+                        // Quiet plates carry their own inset; pull it back so the label meets the text edge.
+                        Modifier.offset(x = (-12).dp),
+                        style = PlateStyle.QUIET,
+                        color = muted,
+                    )
                 }
-                ConnectionStatus.EXPIRED, ConnectionStatus.REVOKED, ConnectionStatus.ERROR -> {
-                    Button(onClick = onConnect, modifier = Modifier.weight(1f)) { Text("Reconnect") }
-                    TextButton(onClick = onDisconnect, modifier = Modifier.weight(1f), colors = signOutColors) { Text("Sign out") }
-                }
-                ConnectionStatus.DISCONNECTED -> Button(
-                    onClick = onConnect,
-                    enabled = connection.integrationStatus != IntegrationStatus.NOT_YET_SUPPORTED,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Connect") }
             }
+            // The account's live glasses, dashed when its sign-in has lapsed.
+            if (!disconnected && snapshot.quotaWindows.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    snapshot.quotaWindows.sortedBy { it.windowType }.forEach { window ->
+                        SandGlass(
+                            leftPercent = window.leftPercent,
+                            sand = ProviderColors.of(connection.provider),
+                            stale = lapsed || snapshot.lastFailure != null,
+                            width = 18.dp,
+                            height = 34.dp,
+                        )
+                    }
+                }
+            }
+            GlyphIcon(Glyph.CHEVRON, tint = muted, size = 20.dp)
+        }
+        snapshot.lastFailure?.let { ErrataSlip(connection.provider, it, now, Modifier.padding(bottom = 12.dp)) }
+        when {
+            disconnected -> PlateButton("Connect", onConnect, Modifier.fillMaxWidth().padding(bottom = 20.dp), enabled = supported)
+            lapsed -> Row(Modifier.padding(bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                PlateButton("Reconnect", onConnect)
+                PlateButton("Sign out", onDisconnect, style = PlateStyle.QUIET, color = muted)
+            }
+            else -> Unit
         }
     }
 }

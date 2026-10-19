@@ -1,51 +1,72 @@
 package com.tokenwatch.feature.dashboard
 
-import com.tokenwatch.core.ui.components.LocalBottomBarPadding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tokenwatch.R
-import com.tokenwatch.core.ui.components.FailureBanner
+import com.tokenwatch.core.ui.components.AlertLimits
+import com.tokenwatch.core.ui.components.Arrive
+import com.tokenwatch.core.ui.components.ErrataSlip
+import com.tokenwatch.core.ui.components.Glyph
+import com.tokenwatch.core.ui.components.GlyphIcon
+import com.tokenwatch.core.ui.components.Rule
+import com.tokenwatch.core.ui.components.rememberHaptics
+import com.tokenwatch.core.ui.components.GlassRack
 import com.tokenwatch.core.ui.components.LoadingState
+import com.tokenwatch.core.ui.components.LocalBottomBarPadding
 import com.tokenwatch.core.ui.components.MessageState
-import com.tokenwatch.core.ui.components.ProviderAvatar
-import com.tokenwatch.core.ui.components.QuotaList
-import com.tokenwatch.core.ui.components.SectionCard
-import com.tokenwatch.core.ui.components.StaleBanner
+import com.tokenwatch.core.ui.components.ProviderMark
+import com.tokenwatch.core.ui.components.SandGlass
 import com.tokenwatch.core.ui.components.TopLevelBar
+import com.tokenwatch.core.ui.components.TurningGlassIndicator
+import com.tokenwatch.core.ui.components.pullGap
 import com.tokenwatch.core.ui.components.connectionLabel
+import com.tokenwatch.core.ui.components.isPastLine
+import com.tokenwatch.core.ui.components.leftPercent
+import com.tokenwatch.core.ui.components.lowestLeft
 import com.tokenwatch.core.ui.components.needsReconnect
-import com.tokenwatch.core.ui.theme.TokenWatchTheme
 import com.tokenwatch.core.ui.theme.ProviderColors
+import com.tokenwatch.core.ui.theme.TokenWatchTheme
 import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ConnectionStatus
 import com.tokenwatch.domain.model.ProviderSnapshot
 import java.time.Instant
+import java.util.Locale
 
 @Composable
 fun DashboardScreen(
@@ -75,41 +96,59 @@ fun DashboardContent(
         when (state) {
             DashboardUiState.Loading -> LoadingState(modifier)
             DashboardUiState.Empty -> MessageState(
-                icon = Icons.Default.AccountCircle,
-                title = "Connect your first AI account",
-                message = "Link Claude, Codex or Gemini to see quotas and reset times in one place.",
-                actionLabel = "Go to connections",
+                glyph = null,
+                art = { SandGlass(leftPercent = null, sand = MaterialTheme.colorScheme.onSurface, width = 48.dp, height = 88.dp) },
+                title = "No accounts connected yet",
+                message = "Connect Claude, Codex or Gemini to see how much of each limit is left and when it comes back.",
+                actionLabel = "Connect an account",
                 onAction = onOpenConnections,
                 modifier = modifier,
             )
             is DashboardUiState.Error -> MessageState(
-                icon = Icons.Default.Warning,
-                title = "Usage couldn't be loaded",
+                glyph = Glyph.ALERT,
+                title = "Usage couldn't be read",
                 message = state.message,
                 actionLabel = "Open accounts",
                 onAction = onOpenConnections,
                 modifier = modifier,
             )
-            is DashboardUiState.Content -> PullToRefreshBox(
-                isRefreshing = state.isRefreshing,
-                onRefresh = onRefreshAll,
-                modifier = modifier,
-            ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp + LocalBottomBarPadding.current),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+            is DashboardUiState.Content -> {
+                val pull = rememberPullToRefreshState()
+                // A soft knock when a pull's reading lands.
+                val haptics = rememberHaptics()
+                var wasRefreshing by remember { mutableStateOf(false) }
+                LaunchedEffect(state.isRefreshing) {
+                    if (wasRefreshing && !state.isRefreshing) haptics.confirm()
+                    wasRefreshing = state.isRefreshing
+                }
+                PullToRefreshBox(
+                    isRefreshing = state.isRefreshing,
+                    onRefresh = onRefreshAll,
+                    state = pull,
+                    modifier = modifier,
+                    indicator = { TurningGlassIndicator(pull, state.isRefreshing) },
                 ) {
-                    if (state.isStale && state.lastUpdated != null) {
-                        item { StaleBanner(state.lastUpdated, state.now) }
-                    }
-                    items(state.providers, key = { it.provider.name }) { snapshot ->
-                        ProviderCard(
-                            snapshot = snapshot,
-                            now = state.now,
-                            onClick = { onProviderClick(snapshot.provider) },
-                            onSignIn = { onSignIn(snapshot.provider) },
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pullGap(pull, state.isRefreshing),
+                        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 0.dp, bottom = 24.dp + LocalBottomBarPadding.current),
+                    ) {
+                        item { Arrive(0) { Verdict(state, onRefreshAll) } }
+                        itemsIndexed(state.providers, key = { _, it -> it.provider.name }) { index, snapshot ->
+                            Arrive(index + 1) {
+                                ProviderShelf(
+                                    snapshot = snapshot,
+                                    now = state.now,
+                                    limits = state.limits,
+                                    // The provider with the least left gets the tall glasses.
+                                    lead = index == 0 && snapshot.lowestLeft != null,
+                                    spinning = snapshot.provider in state.refreshing,
+                                    onClick = { onProviderClick(snapshot.provider) },
+                                    onSignIn = { onSignIn(snapshot.provider) },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -117,51 +156,114 @@ fun DashboardContent(
     }
 }
 
+/** One sentence answering "am I about to hit a limit?" before any glass is read. */
 @Composable
-private fun ProviderCard(
+private fun Verdict(state: DashboardUiState.Content, onRefresh: () -> Unit) {
+    val lowest = state.providers
+        .filter { it.isActive }
+        .flatMap { snapshot -> snapshot.quotaWindows.map { snapshot to it } }
+        .filter { it.second.leftPercent != null }
+        .minByOrNull { it.second.leftPercent ?: Double.MAX_VALUE }
+    val sentence = when {
+        lowest == null -> "No readings yet. Pull down to turn the glasses."
+        else -> {
+            val (snapshot, window) = lowest
+            val name = "${snapshot.provider.displayName} ${window.label.lowercase(Locale.getDefault())}"
+            val left = Format.percent(window.leftPercent ?: 0.0)
+            if (window.isPastLine(state.limits)) "$name is past the line: $left left." else "Lowest is $name, $left left."
+        }
+    }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 20.dp)
+            // The first thing a screen reader lands on; pulling is the only refresh gesture, so it's offered here too.
+            .semantics(mergeDescendants = true) {
+                liveRegion = LiveRegionMode.Polite
+                customActions = listOf(CustomAccessibilityAction("Refresh usage") { onRefresh(); true })
+            },
+    ) {
+        Text(sentence, style = MaterialTheme.typography.bodyLarge)
+        if (state.isStale && state.lastUpdated != null) {
+            Text(
+                "Oldest reading is from ${Format.ago(state.lastUpdated, state.now)}.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+    }
+}
+
+/** One provider on the bench: a ruled shelf with its name, its glasses, and any errata slip. */
+@Composable
+private fun ProviderShelf(
     snapshot: ProviderSnapshot,
     now: Instant,
+    limits: AlertLimits?,
+    lead: Boolean,
+    spinning: Boolean,
     onClick: () -> Unit,
     onSignIn: () -> Unit,
 ) {
     val connection = snapshot.connection
-    val accent = ProviderColors.of(connection.provider)
-    SectionCard(title = null, onClick = onClick) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ProviderAvatar(connection.provider)
-            Column(Modifier.weight(1f)) {
-                Text(connection.provider.displayName, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    listOfNotNull(
-                        connection.planName ?: connectionLabel(connection.status),
-                        connection.lastSyncedAt?.let { "Updated ${Format.ago(it, now)}" },
-                    ).joinToString(" \u00B7 "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    val stale = snapshot.lastFailure != null
+    Column(Modifier.fillMaxWidth()) {
+        Rule()
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = "Open ${connection.provider.displayName}", role = Role.Button, onClick = onClick)
+                .padding(vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ProviderMark(connection.provider)
+            Text(connection.provider.displayName, style = MaterialTheme.typography.titleLarge)
+            Text(
+                listOfNotNull(
+                    connection.planName ?: connectionLabel(connection.status),
+                    connection.lastSyncedAt?.let { "read ${Format.ago(it, now)}" },
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            GlyphIcon(Glyph.CHEVRON, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+        }
+        when {
+            connection.status == ConnectionStatus.DISCONNECTED -> Text(
+                connection.integrationNote ?: "Not connected. Connect it from Accounts.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 20.dp),
+            )
+            snapshot.quotaWindows.isEmpty() -> Text(
+                "Usage unavailable",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 20.dp),
+            )
+            else -> GlassRack(
+                windows = snapshot.quotaWindows,
+                sand = ProviderColors.of(connection.provider),
+                now = now,
+                limits = limits,
+                stale = stale,
+                tall = lead,
+                spinning = spinning,
+                modifier = Modifier.padding(top = 4.dp, bottom = if (stale) 12.dp else 24.dp),
+            )
         }
         snapshot.lastFailure?.let { failure ->
-            FailureBanner(
+            ErrataSlip(
                 provider = connection.provider,
                 failure = failure,
                 now = now,
                 actionLabel = if (failure.needsReconnect) "Sign in" else null,
                 onAction = onSignIn,
+                modifier = Modifier.padding(bottom = 24.dp),
             )
-        }
-        when {
-            connection.status == ConnectionStatus.DISCONNECTED -> Text(
-                connection.integrationNote ?: "Not connected",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            snapshot.quotaWindows.isEmpty() -> Text(
-                "Usage information unavailable",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            else -> QuotaList(snapshot.quotaWindows, accent, now, Modifier.padding(top = 6.dp))
         }
     }
 }

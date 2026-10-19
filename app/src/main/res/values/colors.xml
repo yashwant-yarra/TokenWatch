@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Home-screen widgets; values mirror the app's light theme. -->
-    <color name="widget_background">#FFFFFFFF</color>
-    <color name="widget_text">#FF1A1B21</color>
-    <color name="widget_track">#FFE2E3EA</color>
-    <color name="widget_error">#FFBA1A1A</color>
+    <!-- Home-screen widgets; values mirror the app's light bench. -->
+    <color name="widget_background">#FFF7F8F7</color>
+    <color name="widget_text">#FF1C1A17</color>
+    <color name="widget_muted">#FF5C564D</color>
+    <color name="widget_glass">#FF8D877E</color>
+    <color name="widget_edge">#FFCBCEC9</color>
+    <color name="widget_error">#FFC7361B</color>
 </resources>

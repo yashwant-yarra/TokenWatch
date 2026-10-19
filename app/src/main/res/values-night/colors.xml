@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Home-screen widgets; values mirror the app's dark theme. -->
-    <color name="widget_background">#FF191B22</color>
-    <color name="widget_text">#FFE3E2E9</color>
-    <color name="widget_track">#FF32353C</color>
-    <color name="widget_error">#FFFFB4AB</color>
+    <!-- Home-screen widgets; values mirror the app's dark bench. -->
+    <color name="widget_background">#FF14110E</color>
+    <color name="widget_text">#FFEDE3D2</color>
+    <color name="widget_muted">#FFAB9D88</color>
+    <color name="widget_glass">#FF8C7F6C</color>
+    <color name="widget_edge">#FF3A332B</color>
+    <color name="widget_error">#FFFF6A4D</color>
 </resources>

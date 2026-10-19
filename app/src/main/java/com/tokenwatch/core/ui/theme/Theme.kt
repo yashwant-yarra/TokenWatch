@@ -1,5 +1,8 @@
 package com.tokenwatch.core.ui.theme
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -14,63 +17,72 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.tokenwatch.R
+import com.tokenwatch.core.ui.components.InkWash
 
 val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
-private val LightColors = lightColorScheme(
-    primary = InkBlue,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFDDE1FF),
-    onPrimaryContainer = Color(0xFF00115A),
-    secondary = Color(0xFF5A5D72),
-    secondaryContainer = Color(0xFFDFE1F9),
-    onSecondaryContainer = Color(0xFF171A2C),
-    tertiary = Color(0xFF6B5778),
-    tertiaryContainer = Color(0xFFF2DAFF),
-    background = Color(0xFFF7F8FB),
-    onBackground = Color(0xFF1A1B21),
-    surface = Color(0xFFF7F8FB),
-    onSurface = Color(0xFF1A1B21),
-    surfaceVariant = Color(0xFFE2E2EC),
-    onSurfaceVariant = Color(0xFF45464F),
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFFFFFF),
-    surfaceContainer = Color(0xFFEFF0F6),
-    surfaceContainerHigh = Color(0xFFE8E9F0),
-    surfaceContainerHighest = Color(0xFFE2E3EA),
-    outline = Color(0xFF767680),
-    outlineVariant = Color(0xFFD6D7E0),
-    error = Color(0xFFBA1A1A),
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
+// Material roles mapped onto the bench. Primary is the glass ink itself, so filled buttons read as
+// engraved plates rather than a brand color; error is the held-back alert vermilion.
+private val DarkColors = darkColorScheme(
+    primary = Bench.DarkInk,
+    onPrimary = Bench.DarkGround,
+    primaryContainer = Bench.DarkRaisedHigh,
+    onPrimaryContainer = Bench.DarkInk,
+    secondary = Bench.DarkInkMuted,
+    onSecondary = Bench.DarkGround,
+    secondaryContainer = Bench.DarkRaisedHigh,
+    onSecondaryContainer = Bench.DarkInk,
+    tertiary = Bench.DarkInkMuted,
+    background = Bench.DarkGround,
+    onBackground = Bench.DarkInk,
+    surface = Bench.DarkGround,
+    onSurface = Bench.DarkInk,
+    surfaceVariant = Bench.DarkRaised,
+    onSurfaceVariant = Bench.DarkInkMuted,
+    surfaceContainerLowest = Bench.DarkGround,
+    surfaceContainerLow = Bench.DarkRaised,
+    surfaceContainer = Bench.DarkRaised,
+    surfaceContainerHigh = Bench.DarkRaisedHigh,
+    surfaceContainerHighest = Bench.DarkRaisedHigh,
+    outline = Bench.DarkGlass,
+    outlineVariant = Color(0xFF3A332B),
+    error = Bench.DarkAlert,
+    onError = Bench.DarkGround,
+    errorContainer = Bench.DarkAlertSlip,
+    onErrorContainer = Color(0xFFFFD9CF),
+    inverseSurface = Bench.DarkInk,
+    inverseOnSurface = Bench.DarkGround,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = InkBlueLight,
-    onPrimary = Color(0xFF002388),
-    primaryContainer = Color(0xFF26379A),
-    onPrimaryContainer = Color(0xFFDDE1FF),
-    secondary = Color(0xFFC3C5DD),
-    secondaryContainer = Color(0xFF424659),
-    onSecondaryContainer = Color(0xFFDFE1F9),
-    tertiary = Color(0xFFD7BDE4),
-    tertiaryContainer = Color(0xFF523F5F),
-    background = Color(0xFF101218),
-    onBackground = Color(0xFFE3E2E9),
-    surface = Color(0xFF101218),
-    onSurface = Color(0xFFE3E2E9),
-    surfaceVariant = Color(0xFF45464F),
-    onSurfaceVariant = Color(0xFFC6C5D0),
-    surfaceContainerLowest = Color(0xFF0B0D12),
-    surfaceContainerLow = Color(0xFF191B22),
-    surfaceContainer = Color(0xFF1D1F26),
-    surfaceContainerHigh = Color(0xFF272A31),
-    surfaceContainerHighest = Color(0xFF32353C),
-    outline = Color(0xFF90909A),
-    outlineVariant = Color(0xFF45464F),
-    error = Color(0xFFFFB4AB),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6),
+private val LightColors = lightColorScheme(
+    primary = Bench.LightInk,
+    onPrimary = Bench.LightRaised,
+    primaryContainer = Bench.LightRaisedHigh,
+    onPrimaryContainer = Bench.LightInk,
+    secondary = Bench.LightInkMuted,
+    onSecondary = Bench.LightRaised,
+    secondaryContainer = Bench.LightRaisedHigh,
+    onSecondaryContainer = Bench.LightInk,
+    tertiary = Bench.LightInkMuted,
+    background = Bench.LightGround,
+    onBackground = Bench.LightInk,
+    surface = Bench.LightGround,
+    onSurface = Bench.LightInk,
+    surfaceVariant = Bench.LightRaised,
+    onSurfaceVariant = Bench.LightInkMuted,
+    surfaceContainerLowest = Bench.LightRaised,
+    surfaceContainerLow = Bench.LightRaised,
+    surfaceContainer = Bench.LightRaised,
+    surfaceContainerHigh = Bench.LightRaisedHigh,
+    surfaceContainerHighest = Bench.LightRaisedHigh,
+    outline = Bench.LightGlass,
+    outlineVariant = Color(0xFFCBCEC9),
+    error = Bench.LightAlert,
+    onError = Bench.LightRaised,
+    errorContainer = Bench.LightAlertSlip,
+    onErrorContainer = Color(0xFF5A1405),
+    inverseSurface = Bench.LightInk,
+    inverseOnSurface = Bench.LightRaised,
 )
 
 private val Inter = FontFamily(
@@ -80,8 +92,14 @@ private val Inter = FontFamily(
     Font(R.font.inter_bold, FontWeight.Bold),
 )
 
-private fun style(size: Int, line: Int, weight: FontWeight, tracking: Double = 0.0) = TextStyle(
-    fontFamily = Inter,
+/** Barlow Condensed: the engraved face of the glasses' numerals and scale marks. */
+val Engraved = FontFamily(
+    Font(R.font.barlow_condensed_medium, FontWeight.Medium),
+    Font(R.font.barlow_condensed_semibold, FontWeight.SemiBold),
+)
+
+private fun style(size: Int, line: Int, weight: FontWeight, tracking: Double = 0.0, family: FontFamily = Inter) = TextStyle(
+    fontFamily = family,
     fontWeight = weight,
     fontSize = size.sp,
     lineHeight = line.sp,
@@ -90,15 +108,18 @@ private fun style(size: Int, line: Int, weight: FontWeight, tracking: Double = 0
     fontFeatureSettings = "tnum",
 )
 
-/** One typeface (Inter) with a tight, even scale. Material's wide default tracking is dropped. */
+/** Every percent in the app uses this one size; rank comes from weight and order, never size. */
+val Numeral = style(40, 42, FontWeight.SemiBold, -0.5, Engraved)
+
+// Headings set in the engraved face, prose in Inter.
 private val AppTypography = Typography(
-    displayLarge = style(52, 60, FontWeight.SemiBold, -1.0),
-    displayMedium = style(42, 50, FontWeight.SemiBold, -0.8),
-    displaySmall = style(34, 42, FontWeight.SemiBold, -0.6),
-    headlineLarge = style(30, 38, FontWeight.SemiBold, -0.4),
-    headlineMedium = style(26, 34, FontWeight.SemiBold, -0.3),
-    headlineSmall = style(22, 30, FontWeight.SemiBold, -0.2),
-    titleLarge = style(20, 28, FontWeight.SemiBold, -0.2),
+    displayLarge = style(56, 60, FontWeight.SemiBold, -0.5, Engraved),
+    displayMedium = style(46, 50, FontWeight.SemiBold, -0.4, Engraved),
+    displaySmall = style(38, 42, FontWeight.SemiBold, -0.3, Engraved),
+    headlineLarge = style(34, 38, FontWeight.SemiBold, -0.2, Engraved),
+    headlineMedium = style(30, 34, FontWeight.SemiBold, -0.2, Engraved),
+    headlineSmall = style(24, 28, FontWeight.SemiBold, -0.1, Engraved),
+    titleLarge = style(22, 26, FontWeight.SemiBold, 0.0, Engraved),
     titleMedium = style(16, 22, FontWeight.SemiBold, -0.1),
     titleSmall = style(14, 20, FontWeight.SemiBold),
     bodyLarge = style(16, 24, FontWeight.Normal),
@@ -109,13 +130,18 @@ private val AppTypography = Typography(
     labelSmall = style(11, 14, FontWeight.Medium, 0.2),
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TokenWatchTheme(darkTheme: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalIsDarkTheme provides darkTheme) {
-        MaterialTheme(
-            colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = AppTypography,
-            content = content,
-        )
+        val colors = if (darkTheme) DarkColors else LightColors
+        MaterialTheme(colorScheme = colors, typography = AppTypography) {
+            // No platform ripple or stretch: presses wash with ink, lists stop at their edge.
+            CompositionLocalProvider(
+                LocalIndication provides InkWash(colors.onSurface),
+                LocalOverscrollConfiguration provides null,
+                content = content,
+            )
+        }
     }
 }

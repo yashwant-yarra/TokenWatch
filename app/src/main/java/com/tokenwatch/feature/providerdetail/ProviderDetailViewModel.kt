@@ -3,9 +3,12 @@ package com.tokenwatch.feature.providerdetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tokenwatch.core.ui.components.AlertLimits
+import com.tokenwatch.core.ui.components.alertLimits
 import com.tokenwatch.core.util.clockTicker
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ProviderSnapshot
+import com.tokenwatch.domain.repository.SettingsRepository
 import com.tokenwatch.domain.repository.UsageRepository
 import com.tokenwatch.feature.websession.signOutOfWebSession
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +28,7 @@ sealed interface ProviderDetailUiState {
         val snapshot: ProviderSnapshot,
         val now: Instant,
         val isRefreshing: Boolean,
+        val limits: AlertLimits?,
     ) : ProviderDetailUiState
 }
 
@@ -32,6 +36,7 @@ sealed interface ProviderDetailUiState {
 class ProviderDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: UsageRepository,
+    settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -41,8 +46,13 @@ class ProviderDetailViewModel @Inject constructor(
         repository.snapshot(provider),
         repository.refreshing,
         clockTicker(clock),
-    ) { snapshot, refreshing, now ->
-        if (snapshot == null) ProviderDetailUiState.Loading else ProviderDetailUiState.Content(snapshot, now, provider in refreshing)
+        settingsRepository.settings,
+    ) { snapshot, refreshing, now, settings ->
+        if (snapshot == null) {
+            ProviderDetailUiState.Loading
+        } else {
+            ProviderDetailUiState.Content(snapshot, now, provider in refreshing, settings.alertLimits())
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProviderDetailUiState.Loading)
 
     /** Only a signed-in provider can be re-read; pulling on a signed-out one does nothing. */

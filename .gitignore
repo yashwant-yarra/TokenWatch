@@ -9,3 +9,7 @@ keystore.properties
 *.jks
 *.keystore
 .kotlin/
+
+# Impeccable working files (screenshots, local decision pages)
+.impeccable/review/
+.impeccable/questions/

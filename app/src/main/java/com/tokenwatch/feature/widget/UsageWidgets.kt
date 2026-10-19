@@ -9,11 +9,21 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import androidx.compose.ui.graphics.Canvas as ComposeCanvas
 import android.graphics.Paint
-import android.graphics.RectF
 import android.widget.RemoteViews
 import com.tokenwatch.MainActivity
 import com.tokenwatch.R
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.content.res.ResourcesCompat
+import com.tokenwatch.core.ui.components.GlassLook
+import com.tokenwatch.core.ui.components.drawGlass
 import com.tokenwatch.core.ui.theme.ProviderColors
 import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AiProvider
@@ -32,10 +42,12 @@ enum class WidgetKind(val title: String, val types: Set<QuotaWindowType>) {
     WEEKLY("Weekly", setOf(QuotaWindowType.WEEKLY)),
 }
 
-/** One ring. A null percent means not connected or not reported, shown as an empty ring with a faded logo, never as 0%. */
-data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?)
+/** One glass. A null percent means not connected or not reported, shown as an empty dashed glass, never as 0%. */
+data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?) {
+    val leftPercent: Double? get() = usedPercent?.let { (100.0 - it).coerceIn(0.0, 100.0) }
+}
 
-/** One meter per provider, always in the same order, so rings never swap places. */
+/** One meter per provider, always in the same order, so glasses never swap places. */
 fun widgetMeters(snapshots: List<ProviderSnapshot>, kind: WidgetKind): List<WidgetMeter> =
     AiProvider.entries.map { provider ->
         val snapshot = snapshots.firstOrNull { it.provider == provider }?.takeIf { it.isActive }
@@ -60,10 +72,10 @@ object UsageWidgets {
         val views = RemoteViews(context.packageName, R.layout.widget_usage)
         widgetMeters(snapshots, kind).forEachIndexed { i, meter ->
             val name = meter.provider.displayName
-            views.setImageViewBitmap(meterIds[i], ring(context, meter, isDark))
+            views.setImageViewBitmap(meterIds[i], glass(context, meter, isDark))
             views.setContentDescription(
                 meterIds[i],
-                "$name ${kind.title.lowercase()}: " + (meter.usedPercent?.let { "${Format.percent(it)} used" } ?: "not available"),
+                "$name ${kind.title.lowercase()}: " + (meter.leftPercent?.let { "${Format.percent(it)} left" } ?: "not available"),
             )
         }
         val open = PendingIntent.getActivity(
@@ -76,36 +88,63 @@ object UsageWidgets {
         return views
     }
 
-    // The ring is a bitmap drawn for the theme at render time; a light/dark switch shows on the next usage update.
-    private fun ring(context: Context, meter: WidgetMeter, isDark: Boolean): Bitmap {
+    // A glass and its reading in one bitmap, drawn for the theme at render time with the app's own
+    // glass drawing; a light/dark switch shows on the next usage update.
+    private fun glass(context: Context, meter: WidgetMeter, isDark: Boolean): Bitmap {
         val density = context.resources.displayMetrics.density
-        val size = (48 * density).toInt()
-        val stroke = 4.5f * density
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val bounds = RectF(stroke / 2, stroke / 2, size - stroke / 2, size - stroke / 2)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = stroke
-            strokeCap = Paint.Cap.ROUND
+        val bitmap = ImageBitmap((64 * density).toInt(), (56 * density).toInt())
+        val canvas = ComposeCanvas(bitmap)
+        val left = meter.leftPercent
+        val look = GlassLook.of(
+            dark = isDark,
+            rim = Color(context.getColor(R.color.widget_glass)),
+            ink = Color(context.getColor(R.color.widget_text)),
+            alert = Color(context.getColor(R.color.widget_error)),
+        )
+        canvas.save()
+        canvas.translate(0f, 4 * density)
+        CanvasDrawScope().draw(Density(density), LayoutDirection.Ltr, canvas, Size(22 * density, 48 * density)) {
+            drawGlass(
+                left = left?.let { (it / 100.0).toFloat().coerceIn(0f, 1f) },
+                sand = Color(ProviderColors.argb(meter.provider, isDark)),
+                look = look,
+                alertLeft = null,
+                stale = left == null,
+            )
         }
-        paint.color = context.getColor(R.color.widget_track)
-        canvas.drawArc(bounds, 0f, 360f, false, paint)
-        val percent = meter.usedPercent
-        if (percent != null && percent > 0) {
-            // Same rule as the app's bars: near the limit the ring turns to the error color.
-            paint.color = if (percent >= 90) context.getColor(R.color.widget_error) else ProviderColors.argb(meter.provider, isDark)
-            canvas.drawArc(bounds, -90f, (percent.coerceIn(0.0, 100.0) * 3.6).toFloat(), false, paint)
-        }
-        // Provider logo in the middle. Faded when there's no number, so an empty ring never reads as 0%.
+        canvas.restore()
+
+        val android = bitmap.asAndroidBitmap()
+        val draw = Canvas(android)
+        val x = 28 * density
+        // Provider mark above the numeral. The OpenAI mark is monochrome, so it follows the text color.
         val logo = context.getDrawable(logoFor(meter.provider))!!.mutate()
-        // The OpenAI mark is monochrome, so it follows the theme's text color like in the app.
         if (meter.provider == AiProvider.CODEX) logo.setTint(context.getColor(R.color.widget_text))
-        val inset = (size * 0.28f).toInt()
-        logo.setBounds(inset, inset, size - inset, size - inset)
-        logo.alpha = if (percent == null) 90 else 255
-        logo.draw(canvas)
-        return bitmap
+        logo.setBounds(x.toInt(), (4 * density).toInt(), (x + 13 * density).toInt(), (17 * density).toInt())
+        logo.draw(draw)
+        val engraved = ResourcesCompat.getFont(context, R.font.barlow_condensed_semibold)
+        // Near the limit the numeral turns to the alert color, the same rule as the app without alert lines.
+        val nearLimit = left != null && left <= 10.0
+        draw.drawText(
+            left?.let(Format::percent) ?: "–",
+            x,
+            38 * density,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                typeface = engraved
+                textSize = 21 * context.resources.displayMetrics.scaledDensity
+                color = context.getColor(if (nearLimit) R.color.widget_error else R.color.widget_text)
+            },
+        )
+        draw.drawText(
+            if (left == null) "n/a" else "left",
+            x,
+            50 * density,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = 10 * context.resources.displayMetrics.scaledDensity
+                color = context.getColor(R.color.widget_muted)
+            },
+        )
+        return android
     }
 
     private fun logoFor(provider: AiProvider) = when (provider) {

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Status-bar version of the TokenWatch ring. Only alpha is used, so the color doesn't matter. -->
+<!-- Status-bar version of the sand glass. Only alpha is used, so the color doesn't matter. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:pathData="M20,12 A8,8 0 1 1 12,4"
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M5,2.5h14v2h-14z M5,19.5h14v2h-14z M8.6,8 L15.4,8 C14.4,10 12.8,11 12.8,12 L11.2,12 C11.2,11 9.6,10 8.6,8 Z M7.6,19.5 C8.3,16.8 10.2,16 12,16 C13.8,16 15.7,16.8 16.4,19.5 Z" />
+    <path
+        android:pathData="M6.5,4.5 L17.5,4.5 C17.5,9 13,10.4 13,12 L11,12 C11,10.4 6.5,9 6.5,4.5 Z M6.5,19.5 L17.5,19.5 C17.5,15 13,13.6 13,12 L11,12 C11,13.6 6.5,15 6.5,19.5 Z"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round" />
+        android:strokeWidth="1.4"
+        android:strokeLineJoin="round" />
 </vector>

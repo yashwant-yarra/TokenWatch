@@ -2,11 +2,15 @@ package com.tokenwatch.feature.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tokenwatch.core.ui.components.AlertLimits
+import com.tokenwatch.core.ui.components.alertLimits
+import com.tokenwatch.core.ui.components.lowestLeft
 import com.tokenwatch.core.ui.components.message
 import com.tokenwatch.core.util.clockTicker
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ConnectionStatus
 import com.tokenwatch.domain.model.ProviderSnapshot
+import com.tokenwatch.domain.repository.SettingsRepository
 import com.tokenwatch.domain.repository.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -30,13 +34,18 @@ sealed interface DashboardUiState {
         val lastUpdated: Instant?,
         val isStale: Boolean,
         val isRefreshing: Boolean,
+        /** Providers being re-read right now; their glasses spin. */
+        val refreshing: Set<AiProvider>,
         val now: Instant,
+        /** The user's alert lines, drawn on every glass; null when alerts are off. */
+        val limits: AlertLimits?,
     ) : DashboardUiState
 }
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val repository: UsageRepository,
+    settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -45,8 +54,9 @@ class DashboardViewModel @Inject constructor(
         repository.refreshing,
         repository.hasRefreshed,
         clockTicker(clock),
-    ) { snapshots, refreshing, hasRefreshed, now ->
-        build(snapshots, refreshing, hasRefreshed, now)
+        settingsRepository.settings,
+    ) { snapshots, refreshing, hasRefreshed, now, settings ->
+        build(snapshots, refreshing, hasRefreshed, now, settings.alertLimits())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState.Loading)
 
     /** Pull to refresh: re-reads every provider that has a sign-in. */
@@ -62,6 +72,7 @@ class DashboardViewModel @Inject constructor(
         refreshing: Set<AiProvider>,
         hasRefreshed: Boolean,
         now: Instant,
+        limits: AlertLimits?,
     ): DashboardUiState {
         if (snapshots.isEmpty()) return DashboardUiState.Loading
         val isRefreshing = refreshing.isNotEmpty()
@@ -81,11 +92,17 @@ class DashboardViewModel @Inject constructor(
             (lastUpdated != null && Duration.between(lastUpdated, now) > STALE_AFTER)
 
         return DashboardUiState.Content(
-            providers = snapshots.sortedBy { it.connection.status == ConnectionStatus.DISCONNECTED },
+            // Danger first: the provider with the least left leads; unread and disconnected ones follow.
+            providers = snapshots.sortedWith(
+                compareBy<ProviderSnapshot> { it.connection.status == ConnectionStatus.DISCONNECTED }
+                    .thenBy { it.lowestLeft ?: Double.MAX_VALUE },
+            ),
             lastUpdated = lastUpdated,
             isStale = isStale,
             isRefreshing = isRefreshing,
+            refreshing = refreshing,
             now = now,
+            limits = limits,
         )
     }
 

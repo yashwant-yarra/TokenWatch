@@ -1,0 +1,128 @@
+{
+  "title": "Choose TokenWatch's new world",
+  "question": "The roll assigned The Running Glass. Keep it, take an alternate, or re-roll. Every option answers 'am I about to hit a limit?' first.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Running Glass",
+      "kicker": "THE ROLL",
+      "lineage": "sand timers, ship's glasses and laboratory hourglasses",
+      "thesis": "Every quota window is a sand glass: what's left sits in the bulb, and a reset turns the glass.",
+      "palette": ["#14110E", "#2A241D", "#E9DCC4", "#D97757", "#5ED6B4", "#9B8CFF", "#FF5A3C"],
+      "materials": ["blown glass drawn as hairline vessels", "provider-colored sand", "smoked bronze ground", "engraved graduation ticks"],
+      "viewport": "A rack of glasses, the emptiest one first and tallest; its sand reads '7% left' in big tabular numerals with the reset countdown engraved under it, healthy providers shrink to short glasses in a row below.",
+      "risk": "Skeuomorph kitsch if the glass gets shine, wood or brass; it must stay a drawn instrument, flat hairlines and real numbers.",
+      "raised": [
+        {"from": "Crouwel grid specimen", "raise": "Each glass is engraved with graduation ticks, and your alert threshold is a marked line on the glass, so 'about to hit' is a visible line the sand has crossed."},
+        {"from": "Event catalog", "raise": "Glasses sit in a fixed rack of equal cells; a stale or failed reading is struck through in the cell instead of hidden."},
+        {"from": "Acetate manual", "raise": "A failed refresh attaches as an errata slip to its glass, in the one alert color held out of every other use."},
+        {"from": "Timetable slide rack", "raise": "One numeral size for every percent; rank comes from weight and order, never from shrinking a number."}
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Dark Cockpit",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "airliner caution and warning panels (the 'dark cockpit' philosophy)",
+      "thesis": "Normal is dark and silent; only a window nearing its limit lights up, amber for caution and red for warning.",
+      "palette": ["#0B0D0E", "#1C2124", "#8A9499", "#FFB000", "#FF3B30", "#E8ECEE"],
+      "materials": ["annunciator lamp lenses", "matte panel paint", "stenciled legends", "guarded switches"],
+      "viewport": "A dark annunciator grid with one lens per provider window; healthy ones are unlit legends, the 7%-left Codex weekly lens glows amber with its reset time stenciled beside it.",
+      "risk": "Familiar: amber-on-black instrument panels are where many developer dashboards already land."
+    },
+    {
+      "id": "challenger-metro",
+      "label": "Metro Tiles",
+      "verdict": "competitive",
+      "lineage": "Windows Phone Metro typographic tiles",
+      "thesis": "Giant cropped numerals on flat provider-colored tiles; the type is the interface.",
+      "palette": ["#000000", "#D97757", "#00A88E", "#7B61FF", "#FFFFFF"],
+      "materials": ["flat color tiles", "giant light lowercase", "zero chrome"],
+      "viewport": "A black panorama where the riskiest window is a full-width tile reading '7% left' at poster size, cropped off the right edge.",
+      "case": "Wins clarity, since the numbers can't be missed; loses audience fit, because Metro reads as a dead platform to an Android user.",
+      "risk": "Fights Material navigation and Back expectations if the panorama is taken literally.",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles-hero.webp"
+    },
+    {
+      "id": "challenger-splitflap",
+      "label": "Departure Board",
+      "verdict": "competitive",
+      "lineage": "rail concourse split-flap boards",
+      "thesis": "Each window is a departure row: provider, window, % left and 'back at' time, flapping when it changes.",
+      "palette": ["#111111", "#2B2B2B", "#F2F2F2", "#FFB300", "#C62828"],
+      "materials": ["matte black flaps", "white painted characters", "amber row lamps"],
+      "viewport": "A ruled board sorted by least left; the Codex weekly row's lamp is amber and its 'back at Sun 08:30' column is the loudest thing on screen.",
+      "case": "Wins clarity for reset times; loses on 'about to hit', which a timetable treats as a delay rather than the headline.",
+      "risk": "Per-character flap animation is costly in Compose and must collapse under 'Remove animations'.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse-hero.webp"
+    },
+    {
+      "id": "challenger-crouwel",
+      "label": "Grid Specimen",
+      "verdict": "declined",
+      "lineage": "Wim Crouwel gridded type specimens",
+      "thesis": "Percent numerals built cell by cell on a visible grid.",
+      "palette": ["#FFFFFF", "#1E4FD8", "#D7E3FF"],
+      "materials": ["graph-paper hairlines", "grid-built numerals"],
+      "viewport": "Monumental grid-built '7%' over a faint blue construction grid.",
+      "case": "Loses both: a poster system, not a glance tool.",
+      "kept": "Graduation ticks and the alert line engraved on each glass.",
+      "risk": "Decorative grid noise on a small screen.",
+      "hero": "https://impeccable.style/worlds/cards/crouwel-grid-specimen-hero.webp"
+    },
+    {
+      "id": "challenger-catalog",
+      "label": "Event Catalog",
+      "verdict": "declined",
+      "lineage": "convention circle catalogs on newsprint",
+      "thesis": "Every window a stamp-sized cell, the risky ones circled in pen.",
+      "palette": ["#E9E6DF", "#1A1A1A", "#E0322B"],
+      "materials": ["newsprint", "single ink", "biro circles"],
+      "viewport": "A packed cell grid with three windows circled.",
+      "case": "Loses both: built for hundreds of items, and TokenWatch has six.",
+      "kept": "A fixed rack of equal cells, with stale readings struck through.",
+      "risk": "Density with nothing to fill it.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-doujin-event-catalog-hero.webp"
+    },
+    {
+      "id": "challenger-acetate",
+      "label": "Acetate Manual",
+      "verdict": "declined",
+      "lineage": "boxed-software reference manuals with tab dividers",
+      "thesis": "Screens as tabbed divider boards with acetate leaves.",
+      "palette": ["#E8A33D", "#F2EFE6", "#2A55C9", "#E0412C"],
+      "materials": ["milk acetate", "colored divider board", "punched holes"],
+      "viewport": "A chrome-yellow divider with provider leaves hinged on top.",
+      "case": "Loses both: a reading form for a glance task.",
+      "kept": "Failures as an errata slip in one reserved alert color.",
+      "risk": "Heavy material for a one-second check.",
+      "hero": "https://impeccable.style/worlds/cards/rw-manual-acetate-tab-board-hero.webp"
+    },
+    {
+      "id": "challenger-timetable",
+      "label": "Timetable Rack",
+      "verdict": "declined",
+      "lineage": "1970s pocket airline timetables",
+      "thesis": "One type size; rank carried by weight, case and reversal.",
+      "palette": ["#E2B33C", "#2E3338", "#F4EEDC", "#D9432F", "#2F6B4F"],
+      "materials": ["tinted glass slides", "goldenrod light bed"],
+      "viewport": "A raked rack of slides, one per provider.",
+      "case": "Loses both: raked containers hurt scanning and touch.",
+      "kept": "One numeral size; rank by weight and order.",
+      "risk": "Raked layout fights Android touch targets.",
+      "hero": "https://impeccable.style/worlds/cards/rw-timetable-slide-rack-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code" },
+  "canon": true,
+  "canonCard": {
+    "label": "Material You, done properly",
+    "thesis": "A standard Material 3 app at full craft: dynamic color, expressive type, sorted cards.",
+    "palette": ["#1B1B1F", "#E3E1EC", "#B4C5FF", "#FFB4AB"],
+    "materials": ["tonal surfaces", "wavy progress indicators", "Material 3 Expressive shapes"],
+    "viewport": "Large top app bar, the riskiest window promoted to a hero card, others as compact list items.",
+    "risk": "This is what you just called too generic, polished."
+  },
+  "steer": true
+}

@@ -1,0 +1,684 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T09:15:18.197Z",
+  "title": "Design System: TokenWatch",
+  "extensions": {
+    "colorMeta": {
+      "bench-ground-dark": {
+        "role": "neutral",
+        "displayName": "Smoked Bronze Bench",
+        "canonical": "#14110E",
+        "tonalRamp": [
+          "#2d261f",
+          "#514539",
+          "#756352",
+          "#98826c",
+          "#b1a190",
+          "#cbbfb4",
+          "#e0d9d2",
+          "#f4f2f0"
+        ]
+      },
+      "bench-raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised Bronze",
+        "canonical": "#1E1A16",
+        "tonalRamp": [
+          "#2c2620",
+          "#4f453a",
+          "#736354",
+          "#95826f",
+          "#afa192",
+          "#c9bfb5",
+          "#dfd9d3",
+          "#f4f2f0"
+        ]
+      },
+      "bench-raised-high-dark": {
+        "role": "neutral",
+        "displayName": "High Bronze",
+        "canonical": "#29241E",
+        "tonalRamp": [
+          "#2c2720",
+          "#50463a",
+          "#736554",
+          "#95846f",
+          "#afa292",
+          "#c9c0b5",
+          "#dfd9d3",
+          "#f4f2f0"
+        ]
+      },
+      "ink-dark": {
+        "role": "primary",
+        "displayName": "Glass Ink (dark)",
+        "canonical": "#EDE3D2",
+        "tonalRamp": [
+          "#372a16",
+          "#624c27",
+          "#8e6e39",
+          "#b8904c",
+          "#c9ab78",
+          "#dbc6a4",
+          "#e9ddc8",
+          "#f8f4ed"
+        ]
+      },
+      "ink-muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Ink (dark)",
+        "canonical": "#AB9D88",
+        "tonalRamp": [
+          "#2d2820",
+          "#514739",
+          "#756752",
+          "#98866d",
+          "#b1a490",
+          "#cac1b4",
+          "#dfdad2",
+          "#f4f3f0"
+        ]
+      },
+      "glass-rim-dark": {
+        "role": "neutral",
+        "displayName": "Glass Rim (dark)",
+        "canonical": "#8C7F6C",
+        "tonalRamp": [
+          "#2b2721",
+          "#4e473c",
+          "#706657",
+          "#928572",
+          "#ada394",
+          "#c7c1b7",
+          "#dedad4",
+          "#f4f3f1"
+        ]
+      },
+      "hairline-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#3A332B",
+        "tonalRamp": [
+          "#2c2721",
+          "#4f463b",
+          "#726455",
+          "#95836f",
+          "#afa293",
+          "#c9c0b6",
+          "#ded9d3",
+          "#f4f2f0"
+        ]
+      },
+      "alert-dark": {
+        "role": "tertiary",
+        "displayName": "Alert Vermilion (dark)",
+        "canonical": "#FF6A4D",
+        "tonalRamp": [
+          "#4d0c00",
+          "#8a1600",
+          "#c72000",
+          "#ff2e05",
+          "#ff6142",
+          "#ff9480",
+          "#ffbfb3",
+          "#ffeae5"
+        ]
+      },
+      "alert-slip-dark": {
+        "role": "tertiary",
+        "displayName": "Errata Slip (dark)",
+        "canonical": "#3A1A12",
+        "tonalRamp": [
+          "#3a1a12",
+          "#692f21",
+          "#98442f",
+          "#c45b40",
+          "#d2836f",
+          "#e1ab9e",
+          "#edcdc5",
+          "#f9eeec"
+        ]
+      },
+      "on-alert-slip-dark": {
+        "role": "tertiary",
+        "displayName": "Errata Ink (dark)",
+        "canonical": "#FFD9CF",
+        "tonalRamp": [
+          "#4d1000",
+          "#8a1d00",
+          "#c72900",
+          "#ff3905",
+          "#ff6a42",
+          "#ff9a80",
+          "#ffc2b3",
+          "#ffebe5"
+        ]
+      },
+      "bench-ground-light": {
+        "role": "neutral",
+        "displayName": "Porcelain Bench",
+        "canonical": "#ECEEEC",
+        "tonalRamp": [
+          "#242824",
+          "#414941",
+          "#5e695e",
+          "#7b897b",
+          "#9ba69b",
+          "#bcc3bc",
+          "#d7dbd7",
+          "#f2f3f2"
+        ]
+      },
+      "bench-raised-light": {
+        "role": "neutral",
+        "displayName": "Raised Porcelain",
+        "canonical": "#F7F8F7",
+        "tonalRamp": [
+          "#242924",
+          "#404940",
+          "#5d6a5d",
+          "#7a8a7a",
+          "#9aa79a",
+          "#bbc3bb",
+          "#d6dbd6",
+          "#f1f3f1"
+        ]
+      },
+      "bench-raised-high-light": {
+        "role": "neutral",
+        "displayName": "High Porcelain",
+        "canonical": "#DFE2DF",
+        "tonalRamp": [
+          "#242824",
+          "#414841",
+          "#5f685f",
+          "#7c887c",
+          "#9ca59c",
+          "#bcc2bc",
+          "#d7dbd7",
+          "#f2f3f2"
+        ]
+      },
+      "ink-light": {
+        "role": "primary",
+        "displayName": "Glass Ink (light)",
+        "canonical": "#1C1A17",
+        "tonalRamp": [
+          "#2a2723",
+          "#4c463e",
+          "#6d655a",
+          "#8e8476",
+          "#aaa397",
+          "#c6c1b9",
+          "#dcdad5",
+          "#f3f3f1"
+        ]
+      },
+      "ink-muted-light": {
+        "role": "neutral",
+        "displayName": "Muted Ink (light)",
+        "canonical": "#5C564D",
+        "tonalRamp": [
+          "#2a2723",
+          "#4b463f",
+          "#6c655b",
+          "#8d8477",
+          "#a9a298",
+          "#c5c0ba",
+          "#dcd9d5",
+          "#f3f2f1"
+        ]
+      },
+      "glass-rim-light": {
+        "role": "neutral",
+        "displayName": "Glass Rim (light)",
+        "canonical": "#8D877E",
+        "tonalRamp": [
+          "#292724",
+          "#494641",
+          "#6a655d",
+          "#8a847a",
+          "#a6a29b",
+          "#c3c0bb",
+          "#dbd9d6",
+          "#f3f2f1"
+        ]
+      },
+      "hairline-light": {
+        "role": "neutral",
+        "displayName": "Hairline (light)",
+        "canonical": "#CBCEC9",
+        "tonalRamp": [
+          "#262824",
+          "#444842",
+          "#62685f",
+          "#81887c",
+          "#a0a59c",
+          "#bfc2bc",
+          "#d8dbd7",
+          "#f2f3f2"
+        ]
+      },
+      "alert-light": {
+        "role": "tertiary",
+        "displayName": "Alert Vermilion (light)",
+        "canonical": "#C7361B",
+        "tonalRamp": [
+          "#431209",
+          "#792110",
+          "#af3018",
+          "#e14123",
+          "#e86f59",
+          "#f09e8f",
+          "#f6c5bc",
+          "#fcece9"
+        ]
+      },
+      "alert-slip-light": {
+        "role": "tertiary",
+        "displayName": "Errata Slip (light)",
+        "canonical": "#F8DED6",
+        "tonalRamp": [
+          "#41180b",
+          "#762b14",
+          "#aa3e1d",
+          "#db532a",
+          "#e37d5e",
+          "#eca792",
+          "#f4cabe",
+          "#fbede9"
+        ]
+      },
+      "on-alert-slip-light": {
+        "role": "tertiary",
+        "displayName": "Errata Ink (light)",
+        "canonical": "#5A1405",
+        "tonalRamp": [
+          "#481004",
+          "#821d07",
+          "#bc2a0a",
+          "#f23a12",
+          "#f56a4c",
+          "#f89a86",
+          "#fbc3b7",
+          "#feebe7"
+        ]
+      },
+      "sand-claude-dark": {
+        "role": "secondary",
+        "displayName": "Claude Ochre Sand (dark)",
+        "canonical": "#DDB061",
+        "tonalRamp": [
+          "#3f2d0e",
+          "#715118",
+          "#a47523",
+          "#d39831",
+          "#deb164",
+          "#e8cb96",
+          "#f1e0c0",
+          "#faf5ea"
+        ]
+      },
+      "sand-claude-light": {
+        "role": "secondary",
+        "displayName": "Claude Ochre Sand (light)",
+        "canonical": "#A8741A",
+        "tonalRamp": [
+          "#422e0a",
+          "#775212",
+          "#ac771b",
+          "#de9b27",
+          "#e6b35c",
+          "#eecc91",
+          "#f5e0bd",
+          "#fcf5e9"
+        ]
+      },
+      "sand-codex-dark": {
+        "role": "secondary",
+        "displayName": "Codex Jade Sand (dark)",
+        "canonical": "#5ED6B4",
+        "tonalRamp": [
+          "#103d30",
+          "#1c6e57",
+          "#289f7d",
+          "#38cca2",
+          "#69d9b9",
+          "#99e5d0",
+          "#c2efe3",
+          "#ebfaf6"
+        ]
+      },
+      "sand-codex-light": {
+        "role": "secondary",
+        "displayName": "Codex Jade Sand (light)",
+        "canonical": "#0B7A61",
+        "tonalRamp": [
+          "#064638",
+          "#0b7e64",
+          "#10b691",
+          "#1aeabb",
+          "#52efcc",
+          "#8af4dc",
+          "#b9f9ea",
+          "#e8fdf8"
+        ]
+      },
+      "sand-gemini-dark": {
+        "role": "secondary",
+        "displayName": "Gemini Violet Sand (dark)",
+        "canonical": "#A699FF",
+        "tonalRamp": [
+          "#0a004d",
+          "#12008a",
+          "#1900c7",
+          "#2505ff",
+          "#5a42ff",
+          "#9080ff",
+          "#bcb3ff",
+          "#e9e5ff"
+        ]
+      },
+      "sand-gemini-light": {
+        "role": "secondary",
+        "displayName": "Gemini Violet Sand (light)",
+        "canonical": "#5544C8",
+        "tonalRamp": [
+          "#17113b",
+          "#291f6a",
+          "#3b2d9a",
+          "#4f3ec6",
+          "#7a6dd4",
+          "#a59ce2",
+          "#c9c4ee",
+          "#edebf9"
+        ]
+      },
+      "glass-cap-dark": {
+        "role": "neutral",
+        "displayName": "Glass Cap Metal (dark)",
+        "canonical": "#3B342C",
+        "tonalRamp": [
+          "#2c2721",
+          "#4f463b",
+          "#726455",
+          "#948370",
+          "#aea293",
+          "#c9c0b6",
+          "#ded9d3",
+          "#f4f2f0"
+        ]
+      },
+      "glass-cap-light": {
+        "role": "neutral",
+        "displayName": "Glass Cap Metal (light)",
+        "canonical": "#4A453E",
+        "tonalRamp": [
+          "#2a2723",
+          "#4b463f",
+          "#6c655b",
+          "#8d8477",
+          "#a9a298",
+          "#c5c0ba",
+          "#dcd9d5",
+          "#f3f2f1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Every percent in the app, one size; rank by weight and order."
+      },
+      "headline-medium": {
+        "displayName": "Headline",
+        "purpose": "Top-level screen titles in the bench header."
+      },
+      "headline-small": {
+        "displayName": "Headline Small",
+        "purpose": "Nested screen titles and message-state titles."
+      },
+      "title-large": {
+        "displayName": "Title",
+        "purpose": "Section headings, provider names, dialog titles."
+      },
+      "title-medium": {
+        "displayName": "Title Medium",
+        "purpose": "Emphasized values in label/value rows."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "The dashboard verdict line."
+      },
+      "body-medium": {
+        "displayName": "Body",
+        "purpose": "Explanatory text."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Reset times, metadata, slip text."
+      },
+      "label-large": {
+        "displayName": "Label",
+        "purpose": "Plate-button text, window labels, selector cells."
+      },
+      "label-medium": {
+        "displayName": "Label Small",
+        "purpose": "Bench-bar tab labels, the \"left\" suffix."
+      }
+    },
+    "shadows": [
+      {
+        "name": "glass-contact",
+        "value": "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent) dark / rgba(0,0,0,0.18) light; 5dp oval under the glass",
+        "purpose": "The only shadow in the system, cast by each glass on the bench."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ink-wash",
+        "value": "spring(stiffness=MediumLow); ink at 9% alpha",
+        "purpose": "Press feedback on every clickable, replacing the ripple."
+      },
+      {
+        "name": "control-spring",
+        "value": "spring(dampingRatio=0.55-0.62, stiffness=Medium/MediumLow)",
+        "purpose": "Toggle block, selector plate, slider needle, bench-bar rule."
+      },
+      {
+        "name": "tab-lift",
+        "value": "spring(dampingRatio=0.4, stiffness=Medium); -2dp",
+        "purpose": "Selected bench-bar glyph lift."
+      },
+      {
+        "name": "screen-slide",
+        "value": "slide 1/6 width, spring(dampingRatio=0.85, stiffness=MediumLow) + fade 180ms in / 140ms out",
+        "purpose": "Navigation transitions; Back reverses."
+      },
+      {
+        "name": "dialog-rise",
+        "value": "spring(dampingRatio=0.62, stiffness=MediumLow); from +48dp, scale 0.94",
+        "purpose": "Bench dialog entrance."
+      },
+      {
+        "name": "arrive",
+        "value": "spring(dampingRatio=0.7, stiffness=Low); +24dp, 60ms stagger",
+        "purpose": "Staggered entrance of dashboard blocks."
+      },
+      {
+        "name": "numeral-roll",
+        "value": "vertical slide, spring(dampingRatio=0.7, stiffness=Low)",
+        "purpose": "Percents roll in from the direction they moved."
+      },
+      {
+        "name": "sand-settle",
+        "value": "spring(dampingRatio=0.7, stiffness=VeryLow)",
+        "purpose": "Sand level moving to a new reading."
+      },
+      {
+        "name": "glass-spin",
+        "value": "+360deg, spring(dampingRatio=0.55, stiffness=VeryLow), 300ms pause; lands upright",
+        "purpose": "A provider being re-read."
+      },
+      {
+        "name": "glass-flip",
+        "value": "+180deg, spring(dampingRatio=0.5, stiffness=Low), 260ms pause",
+        "purpose": "Turning glass while refreshing or loading."
+      },
+      {
+        "name": "grain-fall",
+        "value": "5 grains, period about 1.1s, accelerating (p squared)",
+        "purpose": "Live grains through every running glass."
+      },
+      {
+        "name": "sand-tilt",
+        "value": "gravity sensor, smoothing 0.15, clamped to 0.35 rad",
+        "purpose": "Sand surface levels as the phone tilts."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "ValueAnimator.areAnimatorsEnabled() == false",
+        "purpose": "Remove animations stills grains, tilt, spins, flips and entrances."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "single column, 20dp gutter"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Filled Plate Button",
+      "kind": "button",
+      "refersTo": "plate-button-filled",
+      "description": "The one main action in a view: an ink plate with a bench-colored label.",
+      "html": "<button class=\"ds-plate-filled\">Connect an account</button>",
+      "css": ".ds-plate-filled{font-family:'Inter',system-ui,sans-serif;background:#EDE3D2;color:#14110E;border:none;border-radius:3px;min-height:48px;min-width:48px;padding:12px 22px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:box-shadow .2s} .ds-plate-filled:hover{box-shadow:inset 0 0 0 100px rgba(20,17,14,.09)} .ds-plate-filled:active{box-shadow:inset 0 0 0 100px rgba(20,17,14,.18)} .ds-plate-filled:focus-visible{outline:2px solid #EDE3D2;outline-offset:2px}"
+    },
+    {
+      "name": "Outline Plate Button",
+      "kind": "button",
+      "refersTo": "plate-button-outline",
+      "description": "Secondary action: ink hairline at 55% around an ink label.",
+      "html": "<button class=\"ds-plate-outline\">Sign out</button>",
+      "css": ".ds-plate-outline{font-family:'Inter',system-ui,sans-serif;background:transparent;color:#EDE3D2;border:1px solid rgba(237,227,210,.55);border-radius:3px;min-height:48px;padding:12px 22px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background .2s} .ds-plate-outline:hover{background:rgba(237,227,210,.09)} .ds-plate-outline:focus-visible{outline:2px solid #EDE3D2;outline-offset:0}"
+    },
+    {
+      "name": "Quiet Plate Button",
+      "kind": "button",
+      "refersTo": "plate-button-quiet",
+      "description": "Minor action: underlined ink label, no plate.",
+      "html": "<button class=\"ds-plate-quiet\">Cancel</button>",
+      "css": ".ds-plate-quiet{font-family:'Inter',system-ui,sans-serif;background:transparent;color:#EDE3D2;border:none;border-radius:3px;min-height:48px;padding:12px;font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer;transition:background .2s} .ds-plate-quiet:hover{background:rgba(237,227,210,.09)} .ds-plate-quiet:focus-visible{outline:2px solid #EDE3D2}"
+    },
+    {
+      "name": "Scale Selector",
+      "kind": "chip",
+      "refersTo": "scale-selector",
+      "description": "Engraved cells; an inverted ink plate slides to the chosen one.",
+      "html": "<div class=\"ds-scale\" role=\"radiogroup\"><button class=\"ds-scale-cell\" role=\"radio\" aria-checked=\"false\">System</button><button class=\"ds-scale-cell ds-on\" role=\"radio\" aria-checked=\"true\">Light</button><button class=\"ds-scale-cell\" role=\"radio\" aria-checked=\"false\">Dark</button></div>",
+      "css": ".ds-scale{display:flex;height:48px;width:320px;border:1px solid #8C7F6C;border-radius:3px;overflow:hidden;background:#14110E} .ds-scale-cell{font-family:'Inter',system-ui,sans-serif;flex:1;background:transparent;color:#EDE3D2;border:none;border-left:1px solid rgba(140,127,108,.5);font-size:14px;font-weight:500;cursor:pointer;transition:background .25s cubic-bezier(.34,1.4,.64,1),color .2s} .ds-scale-cell:first-child{border-left:none} .ds-scale-cell:hover{background:rgba(237,227,210,.09)} .ds-scale-cell.ds-on{background:#EDE3D2;color:#14110E;font-weight:600} .ds-scale-cell:focus-visible{outline:2px solid #EDE3D2;outline-offset:-2px}"
+    },
+    {
+      "name": "Glass Toggle",
+      "kind": "custom",
+      "refersTo": "glass-toggle",
+      "description": "A square-shouldered lever whose block springs across and fills with ink.",
+      "html": "<button class=\"ds-toggle\" role=\"switch\" aria-checked=\"true\"><span class=\"ds-toggle-block\"></span></button>",
+      "css": ".ds-toggle{position:relative;width:54px;height:32px;border:1.25px solid #8C7F6C;border-radius:3px;background:#29241E;cursor:pointer;padding:0} .ds-toggle-block{position:absolute;top:4px;left:26px;width:22px;height:22px;border-radius:2px;background:#EDE3D2;transition:left .35s cubic-bezier(.34,1.56,.64,1)} .ds-toggle[aria-checked=false]{background:transparent} .ds-toggle[aria-checked=false] .ds-toggle-block{left:4px;background:#14110E;box-shadow:inset 0 0 0 1.25px #8C7F6C} .ds-toggle:focus-visible{outline:2px solid #EDE3D2;outline-offset:2px}"
+    },
+    {
+      "name": "Bench Bar",
+      "kind": "nav",
+      "refersTo": "bench-bar",
+      "description": "Three glyph tabs on the bench with a sliding ink rule.",
+      "html": "<nav class=\"ds-bar\"><a class=\"ds-tab ds-on\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M5.5 3.5h13M5.5 20.5h13M7.5 3.5C7.5 9 11 10 11 12s-3.5 3-3.5 8.5M16.5 3.5C16.5 9 13 10 13 12s3.5 3 3.5 8.5\"/><path d=\"M9 18.8l3-2.6 3 2.6z\" fill=\"currentColor\"/></svg>Usage</a><a class=\"ds-tab\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><circle cx=\"5\" cy=\"6\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5\" cy=\"12\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5\" cy=\"18\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M9.5 6H20M9.5 12H20M9.5 18H20\"/></svg>Accounts</a><a class=\"ds-tab\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M3 15h18M4 15v3.5M8 15v3.5M12 15v3.5M16 15v3.5M20 15v3.5M14 4.5V15\"/><circle cx=\"14\" cy=\"5\" r=\"2.2\" fill=\"currentColor\" stroke=\"none\"/></svg>Settings</a></nav>",
+      "css": ".ds-bar{display:flex;width:360px;height:68px;background:#14110E;border-top:1px solid #3A332B} .ds-tab{font-family:'Inter',system-ui,sans-serif;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#AB9D88;font-size:12px;font-weight:500;position:relative;cursor:pointer;transition:color .2s} .ds-tab svg{transition:transform .3s cubic-bezier(.34,1.8,.64,1)} .ds-tab:hover{color:#EDE3D2} .ds-tab.ds-on{color:#EDE3D2;font-weight:600} .ds-tab.ds-on svg{transform:translateY(-2px)} .ds-tab.ds-on::before{content:'';position:absolute;top:0;width:28px;height:3px;background:#EDE3D2;border-radius:0 0 2px 2px} .ds-tab:focus-visible{outline:2px solid #EDE3D2;outline-offset:-2px}"
+    },
+    {
+      "name": "Errata Slip",
+      "kind": "custom",
+      "refersTo": "errata-slip",
+      "description": "A failed read hung under its glass: the one surface the alert color fills.",
+      "html": "<div class=\"ds-slip\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3.5l9 16H3z\"/><path d=\"M12 9.5V14\"/><circle cx=\"12\" cy=\"16.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg><span>Claude sign-in expired. Showing the last reading.</span><button>Sign in</button></div>",
+      "css": ".ds-slip{font-family:'Inter',system-ui,sans-serif;display:flex;align-items:center;width:340px;background:#3A1A12;color:#FFD9CF;border-radius:3px;padding:4px 4px 4px 12px} .ds-slip span{flex:1;padding:10px;font-size:12px;line-height:16px} .ds-slip button{font-family:'Inter',system-ui,sans-serif;background:transparent;color:#FFD9CF;border:none;min-height:48px;padding:0 12px;font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer;border-radius:3px} .ds-slip button:hover{background:rgba(255,217,207,.09)} .ds-slip button:focus-visible{outline:2px solid #FFD9CF}"
+    },
+    {
+      "name": "Glass Reading (tall)",
+      "kind": "custom",
+      "refersTo": "glass-tall",
+      "description": "Signature: a quota window as a sand glass with its 40sp engraved numeral, label and reset.",
+      "html": "<div class=\"ds-reading\"><svg width=\"64\" height=\"148\" viewBox=\"0 0 64 148\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"b\" x1=\"0\" x2=\"1\"><stop offset=\"0\" stop-color=\"#8C7F6C\" stop-opacity=\".16\"/><stop offset=\".3\" stop-color=\"#EDE3D2\" stop-opacity=\".05\"/><stop offset=\".7\" stop-color=\"#EDE3D2\" stop-opacity=\".05\"/><stop offset=\"1\" stop-color=\"#8C7F6C\" stop-opacity=\".16\"/></linearGradient><clipPath id=\"u\"><path d=\"M9 8H55C55 39 35 57 35 74H29C29 57 9 39 9 8Z\"/></clipPath><clipPath id=\"l\"><path d=\"M9 137H55C55 106 35 91 35 74H29C29 91 9 106 9 137Z\"/></clipPath></defs><ellipse cx=\"32\" cy=\"146\" rx=\"30\" ry=\"2.5\" fill=\"#000\" opacity=\".5\"/><path d=\"M9 8H55C55 39 35 57 35 74H29C29 57 9 39 9 8Z M9 137H55C55 106 35 91 35 74H29C29 91 9 106 9 137Z\" fill=\"url(#b)\"/><rect x=\"0\" y=\"16.1\" width=\"64\" height=\"57.9\" fill=\"#DDB061\" clip-path=\"url(#u)\"/><rect x=\"0\" y=\"128.9\" width=\"64\" height=\"8.1\" fill=\"#DDB061\" clip-path=\"url(#l)\"/><line x1=\"32\" y1=\"74\" x2=\"32\" y2=\"128.9\" stroke=\"#DDB061\" stroke-opacity=\".55\"/><path d=\"M9 8H55C55 39 35 57 35 74H29C29 57 9 39 9 8Z M9 137H55C55 106 35 91 35 74H29C29 91 9 106 9 137Z\" fill=\"none\" stroke=\"#8C7F6C\" stroke-width=\"1.25\"/><g stroke=\"#8C7F6C\" stroke-width=\"1.25\"><line x1=\"0\" x2=\"7\" y1=\"41\" y2=\"41\"/><line x1=\"0\" x2=\"7\" y1=\"27.3\" y2=\"27.3\"/><line x1=\"0\" x2=\"7\" y1=\"16.8\" y2=\"16.8\"/></g><line x1=\"0\" x2=\"64\" y1=\"37.9\" y2=\"37.9\" stroke=\"#FF6A4D\" stroke-width=\"1.25\" stroke-dasharray=\"3 2\"/><path d=\"M13.5 16C13.5 38 22 50 26 63\" fill=\"none\" stroke=\"#fff\" stroke-opacity=\".22\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><rect x=\"0\" y=\"0\" width=\"64\" height=\"8\" rx=\"2.8\" fill=\"#3B342C\"/><rect x=\"0\" y=\"137\" width=\"64\" height=\"8\" rx=\"2.8\" fill=\"#3B342C\"/><line x1=\"2.4\" x2=\"61.6\" y1=\".5\" y2=\".5\" stroke=\"#6E6354\"/></svg><div class=\"ds-num\">77%<small>left</small></div><div class=\"ds-lab\">Weekly</div><div class=\"ds-reset\">Resets in 1d 13h</div></div>",
+      "css": ".ds-reading{background:#14110E;padding:20px;width:180px} .ds-reading svg{transition:transform .9s cubic-bezier(.34,1.3,.64,1)} .ds-reading:hover svg{transform:rotate(360deg)} .ds-num{font-family:'Barlow Condensed','Roboto Condensed',sans-serif;font-size:40px;line-height:42px;font-weight:600;letter-spacing:-.5px;color:#EDE3D2;font-variant-numeric:tabular-nums;margin-top:14px} .ds-num small{font-family:'Inter',system-ui,sans-serif;font-size:12px;font-weight:500;color:#AB9D88;margin-left:4px;letter-spacing:0} .ds-lab{font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:500;color:#EDE3D2} .ds-reset{font-family:'Inter',system-ui,sans-serif;font-size:12px;color:#AB9D88}"
+    },
+    {
+      "name": "Bench Dialog",
+      "kind": "card",
+      "refersTo": "bench-dialog",
+      "description": "A bench slip that springs up from the table: raised tone, hairline rim, no shadow.",
+      "html": "<div class=\"ds-dialog\"><h3>Sign out of Codex?</h3><p>Its cached usage is replaced with a disconnected placeholder.</p><div class=\"ds-dialog-actions\"><button class=\"ds-q\">Cancel</button><button class=\"ds-f\">Sign out</button></div></div>",
+      "css": ".ds-dialog{background:#1E1A16;border:1px solid rgba(140,127,108,.6);border-radius:4px;padding:24px 12px 12px 24px;width:320px;animation:ds-rise .5s cubic-bezier(.34,1.4,.64,1)} @keyframes ds-rise{from{transform:translateY(48px) scale(.94);opacity:0}} .ds-dialog h3{font-family:'Barlow Condensed','Roboto Condensed',sans-serif;font-size:22px;line-height:26px;font-weight:600;color:#EDE3D2;margin:0 12px 14px 0} .ds-dialog p{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:20px;color:#AB9D88;margin:0 12px 14px 0} .ds-dialog-actions{display:flex;justify-content:flex-end;gap:4px} .ds-dialog button{font-family:'Inter',system-ui,sans-serif;min-height:48px;border:none;border-radius:3px;font-size:14px;font-weight:600;cursor:pointer} .ds-q{background:transparent;color:#EDE3D2;text-decoration:underline;padding:0 12px} .ds-f{background:#EDE3D2;color:#14110E;padding:12px 22px} .ds-dialog button:focus-visible{outline:2px solid #EDE3D2;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Running Glass",
+    "overview": "TokenWatch is a bench of blown sand glasses. Each quota window the provider reports is one glass: sand in the upper bulb is what is left, sand in the lower bulb is what is used, and refreshing turns the glass. The bench is smoked bronze in dark mode and cool porcelain in light mode; both are first-class. Glasses are drawn at runtime as premium objects (wall-gradient body, inner rim, curved highlight streaks, dark-metal caps, a soft contact shadow) and the sand is grained, dished in the upper bulb and heaped in the lower, in each provider's own color.\n\nThe feel is playful and premium: delightful to touch, expensive to look at. Play lives in physical motion (grains falling through every running glass, sand levelling with the phone's tilt, sprung flips, haptic ticks), never in decoration. Premium lives in restraint: one ink, hairline rules, one alert color held back, engraved condensed numerals. No stock Android or Material element is visible anywhere. Material 3 is invisible plumbing only (MaterialTheme as the token store, Scaffold layout, the PullToRefresh gesture, the Snackbar slot); every control the user sees is drawn by the app.\n\nDensity is a ruled rack, not a card grid. Sections and provider shelves are separated by one-pixel hairline rules on the bench; nothing floats in a container. Rank comes from glass size and order, never from shrinking a number.",
+    "keyCharacteristics": [
+      "Every quota window is a sand glass; percent left is the upper bulb, area-correct (sqrt mapping).",
+      "One ink (the text color) does every control job; provider sands are the only hues; vermilion means alert and nothing else.",
+      "Barlow Condensed engraved face for titles and numerals; Inter for prose; tabular figures everywhere.",
+      "Hairline rules instead of cards; flat bench with drawn objects on it.",
+      "Springs and haptics on every control; Remove animations stills all of it."
+    ],
+    "rules": [
+      {
+        "name": "The Held-Back Vermilion Rule",
+        "body": "The alert color appears only for alerts: the alert line, a past-the-line numeral, an errata slip. A screen with nothing past its line shows no vermilion at all.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Ink Rule",
+        "body": "Controls are ink on bench or bench on ink. No control takes a provider sand or a third hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sand Is the Provider Rule",
+        "body": "A provider's color lives in its sand. Provider marks carry the provider's own artwork; the OpenAI mark is monochrome and follows the ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Numeral Rule",
+        "body": "Every percent is 40sp Barlow Condensed. Rank is carried by weight, glass size and order; a number is never shrunk to make it less important.",
+        "section": "typography"
+      },
+      {
+        "name": "The Engraved Heading Rule",
+        "body": "Headings and numerals are Barlow Condensed; prose and controls are Inter. Never set a sentence in the condensed face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Bench Rule",
+        "body": "Screens, rows, sections and dialogs cast no shadow. Only the glass casts a shadow, because it is the only object standing on the bench.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** show every quota window as a sand glass drawn with the shared glass routine, sand in the provider's color.",
+      "**Do** set every percent at the one 40sp Barlow Condensed numeral, with tabular figures, rolling in the direction it moved.",
+      "**Do** separate groups with a 1dp hairline rule on the bench and a 20dp gutter.",
+      "**Do** draw every visible control in the app's own vocabulary (plate buttons, glass toggle, scale selector, scale slider, bench bar, bench dialog, glyphs, ink wash) with 48dp targets and proper accessibility roles.",
+      "**Do** answer controls with springs and haptic ticks, and check `motionEnabled()` so Remove animations stills grains, tilt, spins, flips and entrances.",
+      "**Do** show stale readings as stale: dashed outline, half-strength sand, an errata slip."
+    ],
+    "donts": [
+      "**Don't** let any stock Material or Android element show: no ripple, no stretch overscroll, no Material buttons, switches, sliders, segmented buttons, navigation bar, top app bar, dialogs or icon packs.",
+      "**Don't** use cards, elevated containers or surface shadows; only the glass casts a shadow.",
+      "**Don't** use the alert vermilion for anything but alerts.",
+      "**Don't** shrink a numeral to signal lower rank; use glass size, weight and order.",
+      "**Don't** fall back to a horizontal progress bar for usage.",
+      "**Don't** give controls a provider sand or a brand hue; controls are ink."
+    ]
+  }
+}

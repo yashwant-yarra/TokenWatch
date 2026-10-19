@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon version of the mark: the glass and its sand in one tone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M45.6,43 L62.4,43 C60.2,47.6 55.6,50.4 55.6,54 L52.4,54 C52.4,50.4 47.8,47.6 45.6,43 Z M43.2,73 C44.8,66.4 49.6,64.4 54,64.4 C58.4,64.4 63.2,66.4 64.8,73 Z M38.5,30.6 h31 a1.4,1.4 0 0 1 1.4,1.4 v1.6 a1.4,1.4 0 0 1 -1.4,1.4 h-31 a1.4,1.4 0 0 1 -1.4,-1.4 v-1.6 a1.4,1.4 0 0 1 1.4,-1.4 Z M38.5,73 h31 a1.4,1.4 0 0 1 1.4,1.4 v1.6 a1.4,1.4 0 0 1 -1.4,1.4 h-31 a1.4,1.4 0 0 1 -1.4,-1.4 v-1.6 a1.4,1.4 0 0 1 1.4,-1.4 Z" />
+    <path
+        android:pathData="M42,35 L66,35 C66,46 56.6,50 56.6,54 L51.4,54 C51.4,50 42,46 42,35 Z M42,73 L66,73 C66,62 56.6,58 56.6,54 L51.4,54 C51.4,58 42,62 42,73 Z M54,54 L54,64.5"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.2"
+        android:strokeLineJoin="round" />
+</vector>

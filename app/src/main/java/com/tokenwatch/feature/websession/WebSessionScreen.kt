@@ -19,17 +19,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +41,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tokenwatch.BuildConfig
+import com.tokenwatch.core.ui.components.BenchHeader
+import com.tokenwatch.core.ui.components.PlateButton
+import com.tokenwatch.core.ui.components.Rule
 import com.tokenwatch.data.web.UsagePageSpec
 import kotlinx.coroutines.delay
 import org.json.JSONTokener
@@ -70,7 +67,6 @@ fun WebSessionScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WebSessionContent(
     providerName: String,
@@ -81,16 +77,7 @@ private fun WebSessionContent(
 ) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            TopAppBar(
-                title = { Text("Connect $providerName") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-            )
-        },
+        topBar = { BenchHeader("Connect $providerName", onBack = onBack) },
     ) { padding ->
         UsageWebView(
             spec = spec,
@@ -147,7 +134,8 @@ private fun UsageWebView(
             },
             modifier = Modifier.weight(1f).fillMaxWidth(),
         )
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Rule()
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 blockedHost?.let { "This sign-in option opens $it, which this app doesn't allow. Choose another way to sign in." }
                     ?: state.message
@@ -158,13 +146,12 @@ private fun UsageWebView(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
-            Button(
-                onClick = { webView.extract(spec) { payload -> payload?.let { onPayload(it, true) } } },
+            PlateButton(
+                "Read usage now",
+                { webView.extract(spec) { payload -> payload?.let { onPayload(it, true) } } },
+                Modifier.fillMaxWidth(),
                 enabled = !state.saving,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Read usage now")
-            }
+            )
         }
     }
 }

@@ -1,17 +1,15 @@
 package com.tokenwatch.feature.settings
 
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import android.provider.Settings
-import android.os.PowerManager
-import android.net.Uri
-import android.content.Intent
-import com.tokenwatch.core.ui.components.LocalBottomBarPadding
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,53 +19,49 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import com.tokenwatch.core.ui.components.TopLevelBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tokenwatch.BuildConfig
+import com.tokenwatch.core.ui.components.Arrive
+import com.tokenwatch.core.ui.components.BenchDialog
+import com.tokenwatch.core.ui.components.GlassToggle
 import com.tokenwatch.core.ui.components.InfoNote
 import com.tokenwatch.core.ui.components.LoadingState
-import com.tokenwatch.core.ui.components.SectionCard
+import com.tokenwatch.core.ui.components.LocalBottomBarPadding
+import com.tokenwatch.core.ui.components.PlateButton
+import com.tokenwatch.core.ui.components.PlateStyle
+import com.tokenwatch.core.ui.components.SandGlass
+import com.tokenwatch.core.ui.components.ScaleSelector
+import com.tokenwatch.core.ui.components.ScaleSlider
+import com.tokenwatch.core.ui.components.Section
+import com.tokenwatch.core.ui.components.TopLevelBar
+import com.tokenwatch.core.ui.components.rememberHaptics
 import com.tokenwatch.domain.model.AppSettings
 import com.tokenwatch.domain.model.ThemeMode
-import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -84,7 +78,21 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { TopLevelBar("Settings") },
-        snackbarHost = { SnackbarHost(snackbar) },
+        // Messages arrive as an ink slip, not a platform snackbar.
+        snackbarHost = {
+            SnackbarHost(snackbar) { data ->
+                Text(
+                    data.visuals.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.onSurface, RoundedCornerShape(3.dp))
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                )
+            }
+        },
     ) { padding ->
         val current = settings
         if (current == null) {
@@ -95,7 +103,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier: Modifier) {
     var confirm by rememberSaveable { mutableStateOf<String?>(null) }
@@ -111,66 +118,66 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp + LocalBottomBarPadding.current),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp + LocalBottomBarPadding.current),
     ) {
         item {
-            SectionCard(title = "Theme") {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    ThemeMode.entries.forEachIndexed { index, mode ->
-                        SegmentedButton(
-                            selected = settings.themeMode == mode,
-                            onClick = { vm.setTheme(mode) },
-                            shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
-                        ) { Text(mode.label) }
+            Arrive(0) {
+                Section(title = "Theme") {
+                    ScaleSelector(ThemeMode.entries, settings.themeMode, { it.label }, vm::setTheme)
+                }
+            }
+        }
+
+        item {
+            Arrive(1) {
+                Section(title = "Background refresh") {
+                    val enabled = settings.refreshIntervalMinutes > 0
+                    ToggleRow(
+                        "Refresh in the background",
+                        if (enabled) "Every ${minutesLabel(settings.refreshIntervalMinutes)}" else "Off",
+                        enabled,
+                    ) { on -> vm.setRefreshInterval(if (on) DEFAULT_REFRESH_MINUTES else 0) }
+                    if (enabled) RefreshIntervalScale(settings.refreshIntervalMinutes, vm::setRefreshInterval)
+                    InfoNote(
+                        "Re-reads each connected provider's usage page using the sign-in saved in the app, " +
+                            "even when the app is closed. Android may run it later than set to save battery, " +
+                            "especially at short intervals.",
+                    )
+                    if (enabled) BatteryOptimizationHint()
+                }
+            }
+        }
+
+        item {
+            Arrive(2) {
+                Section(title = "Usage alerts") {
+                    ToggleRow(
+                        "Notify near usage limits",
+                        "When a session or weekly window gets down to the amount left below",
+                        settings.usageAlertsEnabled,
+                        enableAlerts,
+                    )
+                    if (settings.usageAlertsEnabled) {
+                        AlertLinePreview(settings.sessionAlertPercent, settings.weeklyAlertPercent)
+                        LabeledGroup("Session: alert at % left") {
+                            ScaleSelector(ALERT_OPTIONS, settings.sessionAlertPercent, { "${100 - it}%" }, vm::setSessionAlert)
+                        }
+                        LabeledGroup("Weekly: alert at % left") {
+                            ScaleSelector(ALERT_OPTIONS, settings.weeklyAlertPercent, { "${100 - it}%" }, vm::setWeeklyAlert)
+                        }
+                        if (settings.refreshIntervalMinutes == 0) {
+                            InfoNote("Alerts are checked whenever usage is read. Turn on background refresh to get them while the app is closed.")
+                        }
                     }
                 }
             }
         }
 
         item {
-            SectionCard(title = "Background refresh") {
-                val enabled = settings.refreshIntervalMinutes > 0
-                SwitchRow(
-                    "Refresh in the background",
-                    if (enabled) "Every ${minutesLabel(settings.refreshIntervalMinutes)}" else "Off",
-                    enabled,
-                ) { on -> vm.setRefreshInterval(if (on) DEFAULT_REFRESH_MINUTES else 0) }
-                if (enabled) RefreshIntervalSlider(settings.refreshIntervalMinutes, vm::setRefreshInterval)
-                InfoNote(
-                    "Re-reads each connected provider's usage page using the sign-in saved in the app, " +
-                        "even when the app is closed. Android may run it later than set to save battery, " +
-                        "especially at short intervals.",
-                )
-                if (enabled) BatteryOptimizationHint()
-            }
-        }
-
-        item {
-            SectionCard(title = "Usage alerts") {
-                SwitchRow("Notify near usage limits", "When a session or weekly quota reaches the limit below", settings.usageAlertsEnabled, enableAlerts)
-                if (settings.usageAlertsEnabled) {
-                    LabeledGroup("Session limit") {
-                        ChoiceChips(ALERT_OPTIONS, settings.sessionAlertPercent, { "$it%" }, vm::setSessionAlert)
-                    }
-                    LabeledGroup("Weekly limit") {
-                        ChoiceChips(ALERT_OPTIONS, settings.weeklyAlertPercent, { "$it%" }, vm::setWeeklyAlert)
-                    }
-                    if (settings.refreshIntervalMinutes == 0) {
-                        InfoNote("Alerts are checked whenever usage is read. Turn on background refresh to get them while the app is closed.")
-                    }
+            Arrive(3) {
+                Section(title = "Your data") {
+                    PlateButton("Delete cached usage", { confirm = "history" }, Modifier.fillMaxWidth(), style = PlateStyle.OUTLINE)
                 }
-            }
-        }
-
-        item {
-            SectionCard(title = "Your data") {
-                OutlinedButton(
-                    onClick = { confirm = "history" },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
-                ) { Text("Delete cached usage") }
             }
         }
 
@@ -186,7 +193,7 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
     }
 
     when (confirm) {
-        "history" -> ConfirmDialog(
+        "history" -> BenchDialog(
             title = "Delete cached usage?",
             text = "Usage stored on this device and all web data in the app, including provider sign-ins, " +
                 "are removed. You'll need to sign in to each provider again.",
@@ -194,6 +201,32 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
             onConfirm = { confirm = null; vm.deleteLocalHistory() },
             onDismiss = { confirm = null },
         )
+    }
+}
+
+/** Two sample glasses showing where each alert line sits; the lines move as the limits change. */
+@Composable
+private fun AlertLinePreview(sessionUsed: Int, weeklyUsed: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(28.dp), verticalAlignment = Alignment.CenterVertically) {
+        listOf("Session" to sessionUsed, "Weekly" to weeklyUsed).forEach { (label, used) ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SandGlass(
+                    leftPercent = 60.0,
+                    sand = MaterialTheme.colorScheme.onSurfaceVariant,
+                    alertUsedPercent = used,
+                    width = 26.dp,
+                    height = 48.dp,
+                )
+                Column {
+                    Text(label, style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        "line at ${100 - used}% left",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -213,53 +246,44 @@ private fun BatteryOptimizationHint() {
     }
     if (unrestricted) return
     InfoNote("Battery optimization is on for TokenWatch, so refreshes can be late or skipped while the phone is idle. Set battery use to Unrestricted to keep them on time.")
-    OutlinedButton(
-        onClick = {
+    PlateButton(
+        "Open battery settings",
+        {
             context.startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         },
-        modifier = Modifier.fillMaxWidth(),
-    ) { Text("Open battery settings") }
+        Modifier.fillMaxWidth(),
+        style = PlateStyle.OUTLINE,
+    )
 }
 
 /** A small label with its control directly under it, so the pair reads as one setting. */
 @Composable
 private fun LabeledGroup(label: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         content()
     }
 }
 
-/** Same full-width segmented control as Theme; no checkmark, so five options fit. */
-@OptIn(ExperimentalMaterial3Api::class)
+/** The whole row is the toggle (48dp+), with the drawn lever at its end. */
 @Composable
-private fun ChoiceChips(options: List<Int>, selected: Int, label: (Int) -> String, onSelect: (Int) -> Unit) {
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = selected == option,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                icon = {},
-            ) { Text(label(option), maxLines = 1) }
-        }
-    }
-}
-
-@Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val haptics = rememberHaptics()
     Row(
-        Modifier.fillMaxWidth().toggleable(value = checked, onValueChange = onChange, role = Role.Switch),
+        Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch) { haptics.tick(); onChange(it) }
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
             Text(title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium))
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = null)
+        GlassToggle(checked)
     }
 }
 
@@ -269,35 +293,21 @@ private val ALERT_OPTIONS = listOf(50, 75, 80, 90, 95)
 
 private fun minutesLabel(minutes: Int) = if (minutes == 1) "1 minute" else "$minutes minutes"
 
-/** 1 to 30 minutes in 1-minute steps. Saves when the drag ends, so each step doesn't reschedule. */
+/** 1 to 30 minutes on a ruled scale. Saves when the drag ends, so each step doesn't reschedule. */
 @Composable
-private fun RefreshIntervalSlider(minutes: Int, onChange: (Int) -> Unit) {
-    var value by remember(minutes) { mutableFloatStateOf(minutes.toFloat()) }
+private fun RefreshIntervalScale(minutes: Int, onChange: (Int) -> Unit) {
+    var value by remember(minutes) { mutableIntStateOf(minutes) }
     Column {
-        Slider(
+        ScaleSlider(
             value = value,
+            range = 1..MAX_REFRESH_MINUTES,
             onValueChange = { value = it },
-            onValueChangeFinished = { onChange(value.roundToInt()) },
-            valueRange = 1f..MAX_REFRESH_MINUTES.toFloat(),
-            steps = MAX_REFRESH_MINUTES - 2,
-            // Whole-minute steps without 29 tick dots along the track.
-            colors = SliderDefaults.colors(activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent),
-            modifier = Modifier.semantics { stateDescription = "Every ${minutesLabel(value.roundToInt())}" },
+            onValueChangeFinished = { if (value != minutes) onChange(value) },
+            stateLabel = { "Every ${minutesLabel(it)}" },
         )
         Row {
             Text("1 min", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             Text("$MAX_REFRESH_MINUTES min", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-}
-
-@Composable
-private fun ConfirmDialog(title: String, text: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
 }
