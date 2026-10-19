@@ -12,7 +12,7 @@ Primarily the developer themselves: one person paying for AI coding/chat subscri
 
 ## Product Purpose
 
-TokenWatch reads the quota a provider already shows on its own signed-in usage page (percent used or left, reset time, plan label) and puts all providers in one place, with optional alerts and home-screen widgets. Success is never being surprised by a limit and never having to open three websites to check.
+TokenWatch reads the quota a provider already shows on its own signed-in usage page (percent used or left, reset time, plan label, and the signed-in account email where the page shows it) and puts all providers in one place, with optional alerts and home-screen widgets. Success is never being surprised by a limit and never having to open three websites to check.
 
 ## Positioning
 
@@ -51,5 +51,5 @@ It reads the numbers each provider shows its own signed-in user, on-device, inst
 1. Honesty over completeness: missing data shows "unavailable", never a made-up number; values are never presented as official API telemetry.
 2. Answer "can I keep going, and until when?" faster than opening the provider's site.
 3. The provider's words win: quota windows, plan names and labels come from the page, never hardcoded.
-4. Private by construction: usage stays on-device; passwords, cookies, tokens and page content are never read or exported.
+4. Private by construction: usage and the account email stay on-device (excluded from backups); passwords, cookies, tokens and other page content are never read or exported.
 5. Stale is shown as stale: when a read fails, keep the last values and say so plainly.

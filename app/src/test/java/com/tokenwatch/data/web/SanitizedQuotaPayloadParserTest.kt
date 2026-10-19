@@ -51,6 +51,24 @@ class SanitizedQuotaPayloadParserTest {
     }
 
     @Test
+    fun accountEmailIsKeptOnlyWhenItIsAnEmail() {
+        fun account(value: String?) = parseSanitizedQuotaPayload(
+            json,
+            """{"schemaVersion":1,${value?.let { "\"accountLabel\":\"$it\"," } ?: ""}"windows":[{"windowId":"a","label":"A","windowType":"DAILY","percent":1,"percentMeaning":"USED"}]}""",
+            AiProvider.CODEX,
+            observedAt,
+        ).accountLabel
+
+        assertEquals("dev@example.com", account("dev@example.com"))
+        assertEquals("dev@example.com", account("  dev@example.com "))
+        assertEquals(null, account(null))
+        // Anything else the page might hand over is dropped, and the usage read still succeeds.
+        assertEquals(null, account("Dev Person"))
+        assertEquals(null, account("not an email @ all"))
+        assertEquals(null, account("a".repeat(250) + "@example.com"))
+    }
+
+    @Test
     fun invalidPayloadFailsAsAWhole() {
         val invalidPayloads = listOf(
             """{"schemaVersion":2,"windows":[{"windowId":"a","label":"A","windowType":"DAILY","percent":1,"percentMeaning":"USED"}]}""",

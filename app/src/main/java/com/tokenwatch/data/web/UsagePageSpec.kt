@@ -44,7 +44,7 @@ data class UsagePageSpec(
                 // them stalls the flow. ChatGPT's sign-in page also offers Google and Apple.
                 setOf("chatgpt.com", "openai.com", "accounts.google.com", "appleid.apple.com"),
                 // Each limit is a div block: "5-hour limit / Resets in 5h 0m / 100% left".
-                extractionScript("div", "5[ -]hour limit|weekly limit"),
+                extractionScript("div", "5[ -]hour limit|weekly limit", accountScript = CHATGPT_ACCOUNT),
                 // Signed out, the usage page falls back to the ChatGPT home page instead of login,
                 // so sign-in starts at login and returns to usage afterwards.
                 signInUrl = "https://chatgpt.com/auth/login?next=%2Fsettings%2Fusage%3Ftab%3Doverview",
@@ -55,15 +55,41 @@ data class UsagePageSpec(
                 setOf("gemini.google.com", "accounts.google.com"),
                 // The plan badge ("PRO") sits under the "Usage limits" heading, outside the quota blocks, so it's read
                 // from the page text, anchored to that heading so an "Upgrade to Pro" banner can't pass for the plan.
-                extractionScript("p", "current usage|weekly limit", headingPlanPattern = "usage limits\\s+(pro|ultra|plus)\\b"),
+                extractionScript(
+                    "p",
+                    "current usage|weekly limit",
+                    headingPlanPattern = "usage limits\\s+(pro|ultra|plus)\\b",
+                    accountScript = GOOGLE_ACCOUNT,
+                ),
             )
         }
+
+        // Account readers: a JS expression giving the signed-in email the page itself holds, or null.
+        // Claude's usage page doesn't show the address anywhere, so Claude has none.
+
+        // ChatGPT keeps the signed-in user in the page's own bootstrap JSON.
+        private val CHATGPT_ACCOUNT = """
+            (() => {
+              try { return JSON.parse(document.getElementById("client-bootstrap").textContent).session.user.email || null; }
+              catch (e) { return null; }
+            })()
+        """
+
+        // Gemini's header account button is labelled "Google Account: Name (email)".
+        private val GOOGLE_ACCOUNT = """
+            (() => {
+              const label = document.querySelector('a[href*="SignOutOptions"]')?.getAttribute("aria-label") || "";
+              const match = label.match(/\(([^()\s]+@[^()\s]+)\)/);
+              return match ? match[1] : null;
+            })()
+        """
 
         private fun extractionScript(
             selector: String,
             labelPattern: String,
             planPattern: String? = null,
             headingPlanPattern: String? = null,
+            accountScript: String? = null,
         ) = """
             (() => {
               const clean = value => (value || "").replace(/\s+/g, " ").trim();
@@ -140,7 +166,9 @@ data class UsagePageSpec(
                 ${headingPlanPattern?.let { "clean(document.body.innerText).match(/$it/i)?.[1]" } ?: "null"};
               // Pages write the plan as "PRO" or "Pro"; show it one way.
               const planName = rawPlan ? rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1).toLowerCase() : null;
-              return JSON.stringify({schemaVersion: 1, planName, windows: uniqueWindows});
+              // Parenthesized so a reader starting on a new line isn't cut off by "return" (automatic semicolons).
+              const accountLabel = (() => { try { return (${accountScript ?: "null"}); } catch (e) { return null; } })();
+              return JSON.stringify({schemaVersion: 1, planName, accountLabel, windows: uniqueWindows});
             })()
         """.trimIndent()
     }

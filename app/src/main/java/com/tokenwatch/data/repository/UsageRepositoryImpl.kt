@@ -73,6 +73,8 @@ class UsageRepositoryImpl @Inject constructor(
                     subscriptionInfo = payload.planName != null,
                 ),
                 planName = payload.planName,
+                // Keep the last known address if this read didn't find one (the page may not have drawn it yet).
+                accountLabel = payload.accountLabel ?: old?.connection?.accountLabel,
                 integrationNote = "Usage is read on-device from the provider's signed-in usage page.",
                 lastSyncedAt = observedAt,
             ),

@@ -14,7 +14,8 @@ Command line: `./gradlew :app:installDebug` and `./gradlew :app:testDebugUnitTes
 ## Connect an account
 
 Open Accounts, select a provider, and sign in inside its private in-app web session. The app reads
-only quota percentages, reset times, and the plan label. It does not read or export passwords,
+only quota percentages, reset times, the plan label, and the signed-in account email where the page
+shows one (Codex, Gemini). These stay on the device. It does not read or export passwords,
 cookies, tokens, page HTML, or conversation content. Usage is read when you sign in or tap
 refresh, and, if you turn on background refresh in Settings, on a schedule using the sign-in saved in
 the app. Settings can also notify you when a session or weekly quota reaches a chosen percent.

@@ -5,7 +5,8 @@ const kt = fs.readFileSync(process.argv[2], "utf8");
 const tpl = kt.split("private fun extractionScript(")[1].split(') = """')[1].split('""".trimIndent()')[0];
 // Fills the Kotlin string templates the way Kotlin would: "\\b" in Kotlin source is \b in JS.
 const fill = (e, value) => value ? e.replace(/\\\\/g, "\\").replace(/\$it/g, value) : "null";
-const script = (sel, pat, plan, headingPlan) => tpl
+const script = (sel, pat, plan, headingPlan, account) => tpl
+  .replace(/\$\{accountScript \?: "null"\}/, () => account || "null")
   .replace(/\$\{planPattern\?\.let \{ "(.*)" \} \?: "null"\}/, (_, e) => fill(e, plan))
   .replace(/\$\{headingPlanPattern\?\.let \{ "(.*)" \} \?: "null"\}/, (_, e) => fill(e, headingPlan))
   .replace(/\$\{'\$'\}/g, "$").replace(/\$selector/g, sel).replace(/\$labelPattern/g, pat);
@@ -18,10 +19,17 @@ const el = (tag, ...kids) => {
   return n;
 };
 const all = (n, tag, out = []) => { if (n.tag === tag) out.push(n); n.kids.forEach(k => typeof k === "object" && all(k, tag, out)); return out; };
-const run = (root, sel, pat, plan, headingPlan) => {
+// `extras` adds the document lookups an account reader uses (getElementById, querySelector).
+const run = (root, sel, pat, plan, headingPlan, account, extras = {}) => {
   body = root;
-  global.document = { body, querySelectorAll: s => all(body, s) };
-  return JSON.parse(eval(script(sel, pat, plan, headingPlan)));
+  global.document = { body, querySelectorAll: s => all(body, s), getElementById: () => null, querySelector: () => null, ...extras };
+  return JSON.parse(eval(script(sel, pat, plan, headingPlan, account)));
+};
+// The account readers exactly as UsagePageSpec.kt writes them.
+const accountReader = name => {
+  const m = kt.match(new RegExp("val " + name + " = \"\"\"([\\s\\S]*?)\"\"\""));
+  if (!m) throw new Error("account reader " + name + " not found");
+  return m[1];
 };
 module.exports = { el, run };
 if (require.main === module) {
@@ -95,5 +103,18 @@ if (require.main === module) {
   // Claude: plan read from its quota block.
   assert.equal(run(el("body", el("section", el("div", "Plan usage limits", "Max"), el("div", "Current session", "Resets in 1 hr", "5% used"))),
     "section", "current session|weekly", "Pro|Max").planName, "Max");
+  // Account email: ChatGPT keeps it in the page's bootstrap JSON; Gemini in the account button's label.
+  const codexBlock = el("body", el("main", el("section", el("div", el("div", el("div", "5-hour limit"), "Resets in 5h 0m", "100% left")))));
+  const bootstrap = email => ({ getElementById: id => id === "client-bootstrap" ? { textContent: JSON.stringify({ session: { user: { email } } }) } : null });
+  const codexAccount = accountReader("CHATGPT_ACCOUNT");
+  assert.equal(run(codexBlock, "div", "5-hour limit|weekly limit", null, null, codexAccount, bootstrap("dev@example.com")).accountLabel, "dev@example.com");
+  assert.equal(run(codexBlock, "div", "5-hour limit|weekly limit", null, null, codexAccount, { getElementById: () => ({ textContent: "not json" }) }).accountLabel, null, "unreadable bootstrap gives no account");
+  const geminiBlock = el("body", el("div", el("p", "Weekly limit"), el("p", "0% used"), el("p", "Resets in 3 hr")));
+  const geminiAccount = accountReader("GOOGLE_ACCOUNT");
+  const label = text => ({ querySelector: q => q.includes("SignOutOptions") ? { getAttribute: () => text } : null });
+  assert.equal(run(geminiBlock, "p", "current usage|weekly limit", null, null, geminiAccount, label("Google Account: Dev Person\n(dev.person@gmail.com)")).accountLabel, "dev.person@gmail.com");
+  assert.equal(run(geminiBlock, "p", "current usage|weekly limit", null, null, geminiAccount, label("Google Account: Dev Person")).accountLabel, null, "a label without an address gives no account");
+  // Providers without an account reader report none.
+  assert.equal(run(geminiBlock, "p", "current usage|weekly limit").accountLabel, null);
   console.log("OK");
 }

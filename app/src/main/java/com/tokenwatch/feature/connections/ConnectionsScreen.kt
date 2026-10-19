@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import com.tokenwatch.core.ui.components.Glyph
 import com.tokenwatch.core.ui.components.GlyphIcon
 import com.tokenwatch.core.ui.components.Rule
@@ -165,11 +166,14 @@ private fun ConnectionCard(
             ProviderMark(connection.provider, size = 26.dp)
             Column(Modifier.weight(1f)) {
                 Text(name, style = MaterialTheme.typography.titleLarge)
+                // The signed-in address, when the provider's page shows one (Claude's doesn't).
+                connection.accountLabel?.let {
+                    Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
                 Text(
                     listOfNotNull(
                         connectionLabel(connection.status),
                         connection.planName,
-                        connection.accountLabel,
                         connection.lastSyncedAt?.let { "read ${Format.ago(it, now)}" },
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,

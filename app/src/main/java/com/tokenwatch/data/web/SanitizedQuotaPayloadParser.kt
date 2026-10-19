@@ -12,6 +12,8 @@ import kotlinx.serialization.json.Json
 
 internal data class SanitizedQuotaPayload(
     val planName: String?,
+    /** The signed-in email the page shows, or null. Anything that isn't a plain email is dropped. */
+    val accountLabel: String?,
     val windows: List<QuotaWindow>,
 )
 
@@ -35,6 +37,7 @@ internal fun parseSanitizedQuotaPayload(
 
     return SanitizedQuotaPayload(
         planName = payload.planName,
+        accountLabel = payload.accountLabel?.trim()?.takeIf { it.length <= MAX_EMAIL && EMAIL.matches(it) },
         windows = payload.windows.map { window ->
             require(window.windowId.isNotBlank()) { "windowId must not be blank" }
             require(window.label.isNotBlank()) { "label must not be blank" }
@@ -60,6 +63,10 @@ internal fun parseSanitizedQuotaPayload(
     )
 }
 
+// Deliberately plain: one address, no spaces or display names, so no other page text can ride along.
+private val EMAIL = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
+private const val MAX_EMAIL = 254
+
 private fun parseInstant(value: String): Instant = try {
     Instant.parse(value)
 } catch (exception: DateTimeParseException) {
@@ -70,6 +77,7 @@ private fun parseInstant(value: String): Instant = try {
 private data class PayloadDto(
     val schemaVersion: Int,
     val planName: String? = null,
+    val accountLabel: String? = null,
     val windows: List<WindowDto>,
 )
 
