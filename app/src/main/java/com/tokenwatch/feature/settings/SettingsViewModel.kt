@@ -8,6 +8,9 @@ import com.tokenwatch.domain.model.ThemeMode
 import com.tokenwatch.domain.repository.SettingsRepository
 import com.tokenwatch.domain.repository.UsageRepository
 import com.tokenwatch.feature.websession.BackgroundRefresh
+import com.tokenwatch.feature.websession.ResetWatch
+import java.time.Instant
+import kotlinx.coroutines.flow.first
 import com.tokenwatch.feature.websession.clearAllWebData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -49,6 +52,17 @@ class SettingsViewModel @Inject constructor(
     fun setSessionAlert(percent: Int) = launch { settingsRepository.setSessionAlertPercent(percent) }
 
     fun setWeeklyAlert(percent: Int) = launch { settingsRepository.setWeeklyAlertPercent(percent) }
+
+    /** Turning it on queues a read at every upcoming reset straight away; off drops them all. */
+    fun setResetAlerts(enabled: Boolean) = launch {
+        settingsRepository.setResetAlertsEnabled(enabled)
+        if (enabled) {
+            val now = Instant.now()
+            usageRepository.snapshots.first().filter { it.isActive }.forEach { ResetWatch.schedule(context, it, now) }
+        } else {
+            ResetWatch.cancelAll(context)
+        }
+    }
 
     fun deleteLocalHistory() = launch {
         // Provider sign-ins live only in this app's web view, so this also signs out of all of them.

@@ -100,7 +100,7 @@ class UsageRefreshWorker(context: Context, params: WorkerParameters) : Coroutine
 }
 
 /** Loads [provider]'s usage page in a web view laid out at screen size but never attached to a window. Main thread only. */
-private suspend fun readInvisibleWebView(context: Context, provider: AiProvider, save: suspend (String) -> Boolean): UsageFailure? {
+internal suspend fun readInvisibleWebView(context: Context, provider: AiProvider, save: suspend (String) -> Boolean): UsageFailure? {
     val spec = UsagePageSpec.forProvider(provider)
     val webView = WebView(context)
     return try {

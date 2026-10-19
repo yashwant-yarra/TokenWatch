@@ -11,4 +11,6 @@ data class AppSettings(
     val sessionAlertPercent: Int = 80,
     /** Notify when a weekly window reaches this percent used. */
     val weeklyAlertPercent: Int = 80,
+    /** Notify once a session or weekly window has reset, confirmed by re-reading the page. */
+    val resetAlertsEnabled: Boolean = false,
 )

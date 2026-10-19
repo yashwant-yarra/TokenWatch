@@ -16,4 +16,6 @@ interface SettingsRepository {
     suspend fun setSessionAlertPercent(percent: Int)
 
     suspend fun setWeeklyAlertPercent(percent: Int)
+
+    suspend fun setResetAlertsEnabled(enabled: Boolean)
 }

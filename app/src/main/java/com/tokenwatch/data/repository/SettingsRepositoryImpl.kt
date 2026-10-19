@@ -33,6 +33,7 @@ class SettingsRepositoryImpl @Inject constructor(
                 usageAlertsEnabled = p[USAGE_ALERTS] ?: defaults.usageAlertsEnabled,
                 sessionAlertPercent = p[SESSION_ALERT] ?: defaults.sessionAlertPercent,
                 weeklyAlertPercent = p[WEEKLY_ALERT] ?: defaults.weeklyAlertPercent,
+                resetAlertsEnabled = p[RESET_ALERTS] ?: defaults.resetAlertsEnabled,
             )
         }
 
@@ -45,6 +46,8 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setSessionAlertPercent(percent: Int) = set(SESSION_ALERT, percent)
 
     override suspend fun setWeeklyAlertPercent(percent: Int) = set(WEEKLY_ALERT, percent)
+
+    override suspend fun setResetAlertsEnabled(enabled: Boolean) = set(RESET_ALERTS, enabled)
 
     private suspend fun <T> set(key: Preferences.Key<T>, value: T) {
         dataStore.edit { it[key] = value }
@@ -60,5 +63,6 @@ class SettingsRepositoryImpl @Inject constructor(
         val USAGE_ALERTS = booleanPreferencesKey("usage_limit_alerts")
         val SESSION_ALERT = intPreferencesKey("session_alert_percent")
         val WEEKLY_ALERT = intPreferencesKey("weekly_alert_percent")
+        val RESET_ALERTS = booleanPreferencesKey("reset_alerts")
     }
 }

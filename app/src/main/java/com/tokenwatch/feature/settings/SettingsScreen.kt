@@ -110,10 +110,18 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         vm.setUsageAlerts(granted)
     }
-    val enableAlerts = { enabled: Boolean ->
-        val needsPermission = enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+    val resetPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        vm.setResetAlerts(granted)
+    }
+    val needsPermission = { enabled: Boolean ->
+        enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else vm.setUsageAlerts(enabled)
+    }
+    val enableAlerts = { enabled: Boolean ->
+        if (needsPermission(enabled)) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else vm.setUsageAlerts(enabled)
+    }
+    val enableResetAlerts = { enabled: Boolean ->
+        if (needsPermission(enabled)) resetPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else vm.setResetAlerts(enabled)
     }
 
     LazyColumn(
@@ -169,6 +177,12 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
                             InfoNote("Alerts are checked whenever usage is read. Turn on background refresh to get them while the app is closed.")
                         }
                     }
+                    ToggleRow(
+                        "Notify when a limit resets",
+                        "Re-reads the provider at each reset time and tells you once the page shows usage is back",
+                        settings.resetAlertsEnabled,
+                        enableResetAlerts,
+                    )
                 }
             }
         }
