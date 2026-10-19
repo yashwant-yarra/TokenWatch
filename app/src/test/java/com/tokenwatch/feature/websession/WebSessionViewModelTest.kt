@@ -1,6 +1,8 @@
 package com.tokenwatch.feature.websession
 
 import androidx.lifecycle.SavedStateHandle
+import com.tokenwatch.data.local.ReadingDao
+import com.tokenwatch.data.local.ReadingEntity
 import com.tokenwatch.data.local.SnapshotDao
 import com.tokenwatch.data.local.SnapshotEntity
 import com.tokenwatch.data.repository.UsageRepositoryImpl
@@ -14,6 +16,8 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,10 +41,20 @@ class WebSessionViewModelTest {
         override suspend fun upsert(entity: SnapshotEntity) { rows[entity.provider] = entity }
         override suspend fun clear() = rows.clear()
     }
+    private val history = MutableStateFlow<List<ReadingEntity>>(emptyList())
+    private val readings = object : ReadingDao {
+        override suspend fun insertAll(readings: List<ReadingEntity>) { history.value = history.value + readings }
+        override fun observeSince(provider: String, sinceMillis: Long) =
+            history.map { all -> all.filter { it.provider == provider && it.observedAtMillis >= sinceMillis } }
+        override fun observeAllSince(sinceMillis: Long) = history.map { all -> all.filter { it.observedAtMillis >= sinceMillis } }
+        override suspend fun deleteOlderThan(cutoffMillis: Long) { history.value = history.value.filter { it.observedAtMillis >= cutoffMillis } }
+        override suspend fun deleteProvider(provider: String) { history.value = history.value.filter { it.provider != provider } }
+        override suspend fun clear() { history.value = emptyList() }
+    }
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val clock = Clock.fixed(Instant.parse("2026-09-18T12:00:00Z"), ZoneOffset.UTC)
     private val alertReads = mutableListOf<Pair<Double?, Double?>>()
-    private val repository = UsageRepositoryImpl(dao, json, clock) { old, new ->
+    private val repository = UsageRepositoryImpl(dao, readings, json, clock) { old, new ->
         alertReads += old?.quotaWindows?.single()?.usedPercent to new.quotaWindows.single().usedPercent
     }
 
@@ -113,6 +127,34 @@ class WebSessionViewModelTest {
 
         assertEquals(ConnectionStatus.CONNECTED, stored()!!.connection.status)
         assertNull(stored()!!.lastFailure)
+    }
+
+    @Test
+    fun everyReadIsKeptForHistory() = runTest {
+        repository.saveWebPayload(AiProvider.CLAUDE, VALID)
+        repository.saveWebPayload(AiProvider.CLAUDE, VALID.replace("\"percent\":40", "\"percent\":55"))
+
+        val kept = repository.history(AiProvider.CLAUDE, Instant.EPOCH).first()
+        assertEquals(listOf(40.0, 55.0), kept.map { it.usedPercent })
+        assertEquals("weekly", kept.first().windowId)
+    }
+
+    @Test
+    fun signingOutDeletesThatProvidersHistory() = runTest {
+        repository.saveWebPayload(AiProvider.CLAUDE, VALID)
+        repository.saveWebPayload(AiProvider.CODEX, VALID)
+        repository.disconnect(AiProvider.CLAUDE)
+
+        assertTrue(repository.history(AiProvider.CLAUDE, Instant.EPOCH).first().isEmpty())
+        assertEquals(1, repository.history(AiProvider.CODEX, Instant.EPOCH).first().size)
+    }
+
+    @Test
+    fun readingsOlderThan35DaysAreDropped() = runTest {
+        history.value = listOf(ReadingEntity(provider = "CLAUDE", windowId = "old", label = "Old", windowType = "WEEKLY", usedPercent = 10.0, resetsAtMillis = null, observedAtMillis = 0))
+        repository.saveWebPayload(AiProvider.CLAUDE, VALID)
+
+        assertEquals(listOf("weekly"), repository.history(AiProvider.CLAUDE, Instant.EPOCH).first().map { it.windowId })
     }
 
     private companion object {

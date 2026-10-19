@@ -53,6 +53,7 @@ import com.tokenwatch.core.ui.components.rememberHaptics
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.feature.connections.ConnectionsScreen
 import com.tokenwatch.feature.dashboard.DashboardScreen
+import com.tokenwatch.feature.history.HistoryScreen
 import com.tokenwatch.feature.providerdetail.ProviderDetailScreen
 import com.tokenwatch.feature.providerdetail.ProviderDetailViewModel
 import com.tokenwatch.feature.settings.SettingsScreen
@@ -62,6 +63,7 @@ import com.tokenwatch.feature.websession.WebSessionViewModel
 
 enum class TopLevelDestination(val route: String, val label: String, val glyph: Glyph) {
     DASHBOARD("dashboard", "Usage", Glyph.USAGE),
+    HISTORY("history", "History", Glyph.HISTORY),
     CONNECTIONS("connections", "Accounts", Glyph.ACCOUNTS),
     SETTINGS("settings", "Settings", Glyph.SETTINGS),
 }
@@ -117,6 +119,7 @@ fun AppNavHost() {
                     onSignIn = { navController.navigate(webSessionRoute(it)) },
                 )
             }
+            composable(TopLevelDestination.HISTORY.route) { HistoryScreen() }
             composable(TopLevelDestination.CONNECTIONS.route) {
                 ConnectionsScreen(
                     onManage = { navController.navigate(providerRoute(it)) },

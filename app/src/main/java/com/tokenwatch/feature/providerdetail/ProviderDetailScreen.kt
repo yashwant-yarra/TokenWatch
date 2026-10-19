@@ -1,6 +1,13 @@
 package com.tokenwatch.feature.providerdetail
 
 import androidx.compose.foundation.layout.Arrangement
+import com.tokenwatch.domain.usecase.chartStart
+import com.tokenwatch.domain.usecase.usageHistory
+import com.tokenwatch.domain.model.QuotaWindow
+import com.tokenwatch.core.ui.components.ScaleSelector
+import com.tokenwatch.core.ui.components.ChartLine
+import com.tokenwatch.core.ui.components.HistoryChart
+import com.tokenwatch.domain.usecase.HistoryRange
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -67,6 +74,7 @@ fun ProviderDetailScreen(
         state = state,
         onBack = onBack,
         onRefresh = viewModel::refresh,
+        onHistoryRange = viewModel::setHistoryRange,
         onConnect = { onWebSession(viewModel.provider) },
         onDisconnect = viewModel::signOut,
     )
@@ -79,6 +87,7 @@ fun ProviderDetailContent(
     state: ProviderDetailUiState,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
+    onHistoryRange: (HistoryRange) -> Unit,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
@@ -105,6 +114,7 @@ fun ProviderDetailContent(
                             .fillMaxSize()
                             .pullGap(pull, state.isRefreshing),
                         onRefresh = onRefresh,
+                        onHistoryRange = onHistoryRange,
                         onConnect = onConnect,
                         onDisconnect = { confirmDisconnect = true },
                     )
@@ -131,6 +141,7 @@ private fun DetailBody(
     state: ProviderDetailUiState.Content,
     modifier: Modifier,
     onRefresh: () -> Unit,
+    onHistoryRange: (HistoryRange) -> Unit,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
@@ -219,6 +230,10 @@ private fun DetailBody(
         }
 
         item {
+            HistorySection(state, windows, onHistoryRange)
+        }
+
+        item {
             Section(title = "Readings") {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     windows.forEach { window ->
@@ -245,6 +260,45 @@ private fun DetailBody(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp).offset(x = (-12).dp),
             )
+        }
+    }
+}
+
+/** Each window's history as percent used, over the chosen range. */
+@Composable
+private fun HistorySection(state: ProviderDetailUiState.Content, windows: List<QuotaWindow>, onRange: (HistoryRange) -> Unit) {
+    val sand = ProviderColors.of(state.snapshot.provider)
+    val rangeStart = state.now.minus(state.historyRange.span)
+    Section(title = "History") {
+        ScaleSelector(HistoryRange.entries, state.historyRange, { it.label }, onRange)
+        val byWindow = state.history.groupBy { it.windowId }
+        if (byWindow.isEmpty()) {
+            InfoNote("History is kept from now on: every reading is saved on this device for 35 days and drawn here.")
+        }
+        windows.filter { it.windowId in byWindow }.forEach { window ->
+            val history = usageHistory(byWindow.getValue(window.windowId))
+            // The axis covers this window's readings, not the whole range when most of it is empty.
+            val from = chartStart(rangeStart, history.segments.flatten().minOfOrNull { it.at }, state.now)
+            val summary = listOfNotNull(
+                "${history.readings} ${if (history.readings == 1) "reading" else "readings"}",
+                history.peakUsed?.let { "peak ${Format.percent(it)} used" },
+                history.resets.count { it.isAfter(from) }.takeIf { it > 0 }?.let { "$it ${if (it == 1) "reset" else "resets"}" },
+            ).joinToString(" · ")
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(window.label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                    Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HistoryChart(
+                    lines = listOf(ChartLine(window.label, sand, history)),
+                    from = from,
+                    to = state.now,
+                    alertUsed = state.limits?.let { it.forWindow(window).toDouble() },
+                    fromLabel = Format.ago(from, state.now),
+                    revealKey = state.historyRange,
+                    description = "${window.label} history, last ${state.historyRange.label}: $summary.",
+                )
+            }
         }
     }
 }

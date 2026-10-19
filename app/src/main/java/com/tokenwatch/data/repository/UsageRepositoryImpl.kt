@@ -1,5 +1,7 @@
 package com.tokenwatch.data.repository
 
+import com.tokenwatch.data.local.ReadingDao
+import com.tokenwatch.data.local.ReadingEntity
 import com.tokenwatch.data.local.SnapshotDao
 import com.tokenwatch.data.local.SnapshotEntity
 import com.tokenwatch.data.web.parseSanitizedQuotaPayload
@@ -9,10 +11,15 @@ import com.tokenwatch.domain.model.IntegrationStatus
 import com.tokenwatch.domain.model.ProviderCapabilities
 import com.tokenwatch.domain.model.ProviderConnection
 import com.tokenwatch.domain.model.ProviderSnapshot
+import com.tokenwatch.domain.model.QuotaWindow
+import com.tokenwatch.domain.model.QuotaWindowType
 import com.tokenwatch.domain.model.UsageFailure
+import com.tokenwatch.domain.model.UsageSource
 import com.tokenwatch.domain.repository.UsageAlertSink
 import com.tokenwatch.domain.repository.UsageRepository
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +34,7 @@ import kotlinx.serialization.json.Json
 @Singleton
 class UsageRepositoryImpl @Inject constructor(
     private val dao: SnapshotDao,
+    private val readings: ReadingDao,
     private val json: Json,
     private val clock: Clock,
     private val alerts: UsageAlertSink,
@@ -54,6 +62,8 @@ class UsageRepositoryImpl @Inject constructor(
 
     override suspend fun disconnect(provider: AiProvider) {
         write(ProviderSnapshot(connection = placeholderConnection(provider)))
+        // Signing out removes that provider's usage from the device, history included.
+        readings.deleteProvider(provider.name)
     }
 
     override fun requestRefresh(provider: AiProvider) = _refreshing.update { it + provider }
@@ -82,6 +92,7 @@ class UsageRepositoryImpl @Inject constructor(
             fetchedAt = observedAt,
         )
         write(snapshot)
+        record(payload.windows)
         alerts.onUsageRead(old, snapshot)
     }
 
@@ -97,6 +108,7 @@ class UsageRepositoryImpl @Inject constructor(
 
     override suspend fun clearCache() {
         dao.clear()
+        readings.clear()
         AiProvider.entries.forEach { write(ProviderSnapshot(connection = placeholderConnection(it))) }
     }
 
@@ -120,4 +132,48 @@ class UsageRepositoryImpl @Inject constructor(
         capabilities = ProviderCapabilities.NONE,
         integrationNote = "Usage is read from the provider page in a private on-device web session.",
     )
+
+    override fun history(provider: AiProvider, since: Instant): Flow<List<QuotaWindow>> =
+        readings.observeSince(provider.name, since.toEpochMilli()).map { rows -> rows.mapNotNull(::toWindow) }
+
+    override fun historyAll(since: Instant): Flow<List<QuotaWindow>> =
+        readings.observeAllSince(since.toEpochMilli()).map { rows -> rows.mapNotNull(::toWindow) }
+
+    /** A stored reading back as a window; rows from a provider or window type this build doesn't know are skipped. */
+    private fun toWindow(row: ReadingEntity): QuotaWindow? {
+        val provider = AiProvider.entries.firstOrNull { it.name == row.provider } ?: return null
+        val type = runCatching { QuotaWindowType.valueOf(row.windowType) }.getOrNull() ?: return null
+        return QuotaWindow(
+            provider = provider,
+            windowId = row.windowId,
+            label = row.label,
+            windowType = type,
+            usedPercent = row.usedPercent,
+            resetsAt = row.resetsAtMillis?.let(Instant::ofEpochMilli),
+            observedAt = Instant.ofEpochMilli(row.observedAtMillis),
+            source = UsageSource.WEB_PAGE,
+        )
+    }
+
+    /** Keeps each reading for the history chart, and drops readings older than [HISTORY_KEPT]. */
+    private suspend fun record(windows: List<QuotaWindow>) {
+        readings.insertAll(
+            windows.map {
+                ReadingEntity(
+                    provider = it.provider.name,
+                    windowId = it.windowId,
+                    label = it.label,
+                    windowType = it.windowType.name,
+                    usedPercent = it.usedPercent,
+                    resetsAtMillis = it.resetsAt?.toEpochMilli(),
+                    observedAtMillis = it.observedAt.toEpochMilli(),
+                )
+            },
+        )
+        readings.deleteOlderThan(clock.instant().minus(HISTORY_KEPT).toEpochMilli())
+    }
+
+    private companion object {
+        val HISTORY_KEPT: Duration = Duration.ofDays(35)
+    }
 }

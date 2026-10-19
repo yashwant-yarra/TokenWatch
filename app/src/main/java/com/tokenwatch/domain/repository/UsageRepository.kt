@@ -3,6 +3,8 @@ package com.tokenwatch.domain.repository
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ProviderSnapshot
 import com.tokenwatch.domain.model.UsageFailure
+import com.tokenwatch.domain.model.QuotaWindow
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -28,4 +30,10 @@ interface UsageRepository {
     suspend fun finishRefresh(provider: AiProvider, failure: UsageFailure?)
 
     suspend fun clearCache()
+
+    /** Every stored reading of [provider]'s windows since [since], oldest first. */
+    fun history(provider: AiProvider, since: Instant): Flow<List<QuotaWindow>>
+
+    /** Every stored reading of every provider since [since], oldest first. */
+    fun historyAll(since: Instant): Flow<List<QuotaWindow>>
 }

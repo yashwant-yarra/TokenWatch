@@ -150,7 +150,7 @@ fun rememberHaptics(): Haptics {
 // ---------------------------------------------------------------------------------------------
 // Glyphs: the app's own hairline icon set, drawn in the glasses' stroke.
 
-enum class Glyph { BACK, CHEVRON, USAGE, ACCOUNTS, SETTINGS, INFO, ALERT, CHECK }
+enum class Glyph { BACK, CHEVRON, USAGE, HISTORY, ACCOUNTS, SETTINGS, INFO, ALERT, CHECK }
 
 @Composable
 fun GlyphIcon(glyph: Glyph, modifier: Modifier = Modifier, tint: Color = MaterialTheme.colorScheme.onSurface, size: Dp = 24.dp) {
@@ -186,6 +186,10 @@ fun GlyphIcon(glyph: Glyph, modifier: Modifier = Modifier, tint: Color = Materia
                     style = line,
                 )
                 drawPath(poly(9f, 18.8f, 12f, 16.2f, 15f, 18.8f, closed = true), tint)
+            }
+            Glyph.HISTORY -> {
+                drawLine(tint, p(3.5f, 20f), p(20.5f, 20f), strokeWidth = line.width, cap = StrokeCap.Round)
+                drawPath(poly(4f, 6f, 9f, 11f, 13f, 9f, 16f, 15f, 20f, 5f), tint, style = line)
             }
             Glyph.ACCOUNTS -> listOf(6f, 12f, 18f).forEach { y ->
                 drawCircle(tint, radius = 1.7f * u, center = p(5f, y))

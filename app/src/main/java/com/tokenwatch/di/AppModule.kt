@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.tokenwatch.data.local.AppDatabase
+import com.tokenwatch.data.local.MIGRATION_1_2
+import com.tokenwatch.data.local.ReadingDao
 import com.tokenwatch.data.local.SnapshotDao
 import com.tokenwatch.data.notify.UsageAlertNotifier
 import com.tokenwatch.data.repository.SettingsRepositoryImpl
@@ -43,11 +45,15 @@ object AppModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "ai_usage.db")
+            .addMigrations(MIGRATION_1_2)
             .fallbackToDestructiveMigration()
             .build()
 
     @Provides
     fun provideSnapshotDao(database: AppDatabase): SnapshotDao = database.snapshotDao()
+
+    @Provides
+    fun provideReadingDao(database: AppDatabase): ReadingDao = database.readingDao()
 
     @Provides
     @Singleton
