@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -105,9 +106,10 @@ fun GlassReading(
     }
     val semantics = Modifier.clearAndSetSemantics { contentDescription = description }
     if (tall) {
-        Column(modifier.then(semantics), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        // Centered in its half, so the glass sits over its reading instead of hugging the left edge.
+        Column(modifier.then(semantics), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             glass()
-            Column(Modifier.padding(top = 12.dp)) {
+            Column(Modifier.padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 numeral()
                 caption()
             }
@@ -115,7 +117,9 @@ fun GlassReading(
     } else {
         Row(modifier.then(semantics), verticalAlignment = Alignment.CenterVertically) {
             glass()
-            Column(Modifier.padding(start = 12.dp)) {
+            // Optical centering: the glass keeps shadow room under its base and the numeral face has
+            // empty ascent above the digits, so plain centering sat the text ~5dp low.
+            Column(Modifier.padding(start = 12.dp).offset(y = (-5).dp)) {
                 numeral()
                 caption()
             }
