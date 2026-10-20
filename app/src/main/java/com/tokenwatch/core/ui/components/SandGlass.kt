@@ -171,8 +171,8 @@ data class GlassLook(
             rim = rim,
             body = ink.copy(alpha = if (dark) 0.05f else 0.04f),
             highlight = Color.White.copy(alpha = if (dark) 0.22f else 0.75f),
-            cap = if (dark) Color(0xFF3B342C) else Color(0xFF4A453E),
-            capEdge = if (dark) Color(0xFF6E6354) else Color(0xFF8A847A),
+            cap = if (dark) Color(0xFF2E3236) else Color(0xFF4A453E),
+            capEdge = if (dark) Color(0xFF5C6268) else Color(0xFF8A847A),
             shadow = Color.Black.copy(alpha = if (dark) 0.55f else 0.18f),
             alert = alert,
         )

@@ -1,17 +1,17 @@
 ---
 name: TokenWatch
-description: Every quota window is a sand glass on a smoked-bronze or porcelain bench.
+description: Every quota window is a sand glass on a graphite or porcelain bench.
 colors:
-  bench-ground-dark: "#14110E"
-  bench-raised-dark: "#1E1A16"
-  bench-raised-high-dark: "#29241E"
-  ink-dark: "#EDE3D2"
-  ink-muted-dark: "#AB9D88"
-  glass-rim-dark: "#8C7F6C"
-  hairline-dark: "#3A332B"
-  alert-dark: "#FF6A4D"
-  alert-slip-dark: "#3A1A12"
-  on-alert-slip-dark: "#FFD9CF"
+  bench-ground-dark: "#0B0C0D"
+  bench-raised-dark: "#16181A"
+  bench-raised-high-dark: "#202326"
+  ink-dark: "#ECEEF0"
+  ink-muted-dark: "#8E949A"
+  glass-rim-dark: "#6E747A"
+  hairline-dark: "#24272A"
+  alert-dark: "#FF5468"
+  alert-slip-dark: "#3A1419"
+  on-alert-slip-dark: "#FFD6DC"
   bench-ground-light: "#ECEEEC"
   bench-raised-light: "#F7F8F7"
   bench-raised-high-light: "#DFE2DF"
@@ -19,16 +19,16 @@ colors:
   ink-muted-light: "#5C564D"
   glass-rim-light: "#8D877E"
   hairline-light: "#CBCEC9"
-  alert-light: "#C7361B"
-  alert-slip-light: "#F8DED6"
-  on-alert-slip-light: "#5A1405"
-  sand-claude-dark: "#DDB061"
-  sand-claude-light: "#A8741A"
-  sand-codex-dark: "#5ED6B4"
-  sand-codex-light: "#0B7A61"
-  sand-gemini-dark: "#A699FF"
-  sand-gemini-light: "#5544C8"
-  glass-cap-dark: "#3B342C"
+  alert-light: "#CF2A40"
+  alert-slip-light: "#FADADF"
+  on-alert-slip-light: "#5C0C1A"
+  sand-claude-dark: "#E08B6B"
+  sand-claude-light: "#C15F3C"
+  sand-codex-dark: "#3CCB9C"
+  sand-codex-light: "#0A7F62"
+  sand-gemini-dark: "#6FA8FF"
+  sand-gemini-light: "#2F6FD6"
+  glass-cap-dark: "#2E3236"
   glass-cap-light: "#4A453E"
 typography:
   numeral:
@@ -181,7 +181,7 @@ components:
 
 **Creative North Star: "The Running Glass"**
 
-TokenWatch is a bench of blown sand glasses. Each quota window the provider reports is one glass: sand in the upper bulb is what is left, sand in the lower bulb is what is used, and refreshing turns the glass. The bench is smoked bronze in dark mode and cool porcelain in light mode; both are first-class. Glasses are drawn at runtime as premium objects (wall-gradient body, inner rim, curved highlight streaks, dark-metal caps, a soft contact shadow) and the sand is grained, dished in the upper bulb and heaped in the lower, in each provider's own color.
+TokenWatch is a bench of blown sand glasses. Each quota window the provider reports is one glass: sand in the upper bulb is what is left, sand in the lower bulb is what is used, and refreshing turns the glass. The bench is neutral graphite in dark mode (no warm cast) and cool porcelain in light mode; both are first-class. Glasses are drawn at runtime as premium objects (wall-gradient body, inner rim, curved highlight streaks, dark-metal caps, a soft contact shadow) and the sand is grained, dished in the upper bulb and heaped in the lower, in each provider's own color.
 
 The feel is playful and premium: delightful to touch, expensive to look at. Play lives in physical motion (grains falling through every running glass, sand levelling with the phone's tilt, sprung flips, haptic ticks), never in decoration. Premium lives in restraint: one ink, hairline rules, one alert color held back, engraved condensed numerals. No stock Android or Material element is visible anywhere. Material 3 is invisible plumbing only (MaterialTheme as the token store, Scaffold layout, the PullToRefresh gesture, the Snackbar slot); every control the user sees is drawn by the app.
 
@@ -189,26 +189,26 @@ Density is a ruled rack, not a card grid. Sections and provider shelves are sepa
 
 **Key Characteristics:**
 - Every quota window is a sand glass; percent left is the upper bulb, area-correct (sqrt mapping).
-- One ink (the text color) does every control job; provider sands are the only hues; vermilion means alert and nothing else.
+- One ink (the text color) does every control job; provider sands are the only hues; rose red means alert and nothing else.
 - Barlow Condensed engraved face for titles and numerals; Inter for prose; tabular figures everywhere.
 - Hairline rules instead of cards; flat bench with drawn objects on it.
 - Springs and haptics on every control; Remove animations stills all of it.
 
 ## Colors
 
-A warm-neutral bench in two grounds, one ink per ground, three provider sands, and one vermilion held in reserve.
+A neutral bench in two grounds (graphite and porcelain), one ink per ground, three provider sands, and one rose red held in reserve.
 
 ### Primary
 - **Glass Ink** (`ink-dark` / `ink-light`): the text color and the app's only control color. Filled plate buttons, the selected scale-selector plate, the toggle block when on, the slider needle, the bench-bar rule and the focus ring are all ink. Mapped to Material `primary` and `onSurface`, so a "filled" control reads as an engraved plate rather than a brand color.
 
 ### Secondary
-- **Provider Sands** (`sand-claude-*` ochre, `sand-codex-*` jade, `sand-gemini-*` violet): the sand inside a provider's glasses and nothing else. Each has a dark-ground and light-ground value tuned for contrast on its bench. Never used for text, controls or fills outside a glass.
+- **Provider Sands** (`sand-claude-*` terracotta, `sand-codex-*` OpenAI green, `sand-gemini-*` Gemini blue, each the provider's own brand hue): the sand inside a provider's glasses and nothing else. Each has a dark-ground and light-ground value tuned for contrast on its bench. Never used for text, controls or fills outside a glass.
 
 ### Tertiary
-- **Alert Vermilion** (`alert-dark` / `alert-light`): the user's alert line (dashed, across and past the upper bulb), a percent numeral once its window is past the line, and the errata slip (`alert-slip-*` ground with `on-alert-slip-*` text), the one place it fills a surface. Mapped to Material `error`.
+- **Alert Rose** (`alert-dark` / `alert-light`): the user's alert line (dashed, across and past the upper bulb), a percent numeral once its window is past the line, and the errata slip (`alert-slip-*` ground with `on-alert-slip-*` text), the one place it fills a surface. Mapped to Material `error`.
 
 ### Neutral
-- **Smoked Bronze Bench** (`bench-ground-dark`) / **Porcelain Bench** (`bench-ground-light`): the screen ground, header and bench bar, window and splash.
+- **Graphite Bench** (`bench-ground-dark`) / **Porcelain Bench** (`bench-ground-light`): the screen ground, header and bench bar, window and splash.
 - **Raised Bench** (`bench-raised-*`, `bench-raised-high-*`): dialog slips, the toggle's on-state well, and the widget ground in light mode.
 - **Muted Ink** (`ink-muted-*`): secondary text, unselected bench-bar tabs, reset captions, chevrons.
 - **Glass Rim** (`glass-rim-*`): glass outlines and graduations, toggle and selector borders, slider scale. Mapped to Material `outline`.
@@ -216,7 +216,7 @@ A warm-neutral bench in two grounds, one ink per ground, three provider sands, a
 - **Glass Cap** (`glass-cap-*`): the solid metal caps a glass stands between.
 
 ### Named Rules
-**The Held-Back Vermilion Rule.** The alert color appears only for alerts: the alert line, a past-the-line numeral, an errata slip. A screen with nothing past its line shows no vermilion at all.
+**The Held-Back Alert Rule.** The alert color appears only for alerts: the alert line, a past-the-line numeral, an errata slip. A screen with nothing past its line shows no alert red at all. It is rose, not vermilion, so it never reads as Claude's terracotta sand.
 
 **The One Ink Rule.** Controls are ink on bench or bench on ink. No control takes a provider sand or a third hue.
 
@@ -301,7 +301,7 @@ The app's own hairline icon set drawn on canvas at a 24-unit grid with a 1.6dp r
 The core component, drawn by one shared routine for the app, the refresh indicator and the widgets.
 - **Anatomy:** upper and lower bulbs as bezier paths, body gradient, outer rim hairline plus a 35% inner rim, two highlight streaks and a right rim light, solid caps with a lit edge, contact shadow.
 - **Sand:** level follows area (sqrt mapping, so half the sand fills half the bulb); the upper surface is dished, the lower pile heaped; shaded darker at the walls and base, lifted at the crest, with fixed light and dark speckle. A thin stream and five accelerating grains fall while sand remains above and below.
-- **Marks:** rim graduations at 25/50/75% left on the upper bulb; the user's alert line as a dashed vermilion line running across and past the bulb.
+- **Marks:** rim graduations at 25/50/75% left on the upper bulb; the user's alert line as a dashed rose-red line running across and past the bulb.
 - **States:** stale or unreported draws a dashed outline and half-strength sand; sand settles to a new reading on a soft spring; while re-reading, the glass turns full sprung circles and always lands upright.
 - **Motion host (Sand Bench):** one shared frame clock for every grain and the gravity sensor tilting the sand surface, clamped to 0.35 rad; both pause in the background and under Remove animations.
 - **Sizes:** tall 64x148dp, compact 34x72dp, settings preview 26x48dp, mini 18x34dp, turning indicator 18x30dp.
@@ -322,7 +322,7 @@ A small ink glass. In pull-to-refresh it drops with the pull, tips toward a flip
 ### Don't:
 - **Don't** let any stock Material or Android element show: no ripple, no stretch overscroll, no Material buttons, switches, sliders, segmented buttons, navigation bar, top app bar, dialogs or icon packs.
 - **Don't** use cards, elevated containers or surface shadows; only the glass casts a shadow.
-- **Don't** use the alert vermilion for anything but alerts.
+- **Don't** use the alert rose for anything but alerts.
 - **Don't** shrink a numeral to signal lower rank; use glass size, weight and order.
 - **Don't** fall back to a horizontal progress bar for usage.
 - **Don't** give controls a provider sand or a brand hue; controls are ink.

@@ -6,5 +6,5 @@
     <color name="widget_muted">#FF5C564D</color>
     <color name="widget_glass">#FF8D877E</color>
     <color name="widget_edge">#FFCBCEC9</color>
-    <color name="widget_error">#FFC7361B</color>
+    <color name="widget_error">#FFCF2A40</color>
 </resources>

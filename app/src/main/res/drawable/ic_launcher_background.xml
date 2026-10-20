@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The smoked-bronze bench, slightly lit from above. -->
+<!-- The graphite bench, slightly lit from above. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
@@ -13,8 +13,8 @@
                 android:centerX="54"
                 android:centerY="36"
                 android:gradientRadius="80"
-                android:startColor="#FF2A241D"
-                android:endColor="#FF14110E" />
+                android:startColor="#FF1F2225"
+                android:endColor="#FF0B0C0D" />
         </aapt:attr>
     </path>
 </vector>

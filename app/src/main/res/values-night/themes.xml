@@ -1,5 +1,5 @@
 <resources>
     <style name="Theme.TokenWatch" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#FF14110E</item>
+        <item name="android:windowBackground">#FF0B0C0D</item>
     </style>
 </resources>

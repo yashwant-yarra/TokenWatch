@@ -10,7 +10,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -22,7 +21,7 @@ import com.tokenwatch.core.ui.components.InkWash
 val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
 // Material roles mapped onto the bench. Primary is the glass ink itself, so filled buttons read as
-// engraved plates rather than a brand color; error is the held-back alert vermilion.
+// engraved plates rather than a brand color; error is the held-back alert rose.
 private val DarkColors = darkColorScheme(
     primary = Bench.DarkInk,
     onPrimary = Bench.DarkGround,
@@ -45,11 +44,11 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHigh = Bench.DarkRaisedHigh,
     surfaceContainerHighest = Bench.DarkRaisedHigh,
     outline = Bench.DarkGlass,
-    outlineVariant = Color(0xFF3A332B),
+    outlineVariant = Bench.DarkHairline,
     error = Bench.DarkAlert,
     onError = Bench.DarkGround,
     errorContainer = Bench.DarkAlertSlip,
-    onErrorContainer = Color(0xFFFFD9CF),
+    onErrorContainer = Bench.DarkOnAlertSlip,
     inverseSurface = Bench.DarkInk,
     inverseOnSurface = Bench.DarkGround,
 )
@@ -76,11 +75,11 @@ private val LightColors = lightColorScheme(
     surfaceContainerHigh = Bench.LightRaisedHigh,
     surfaceContainerHighest = Bench.LightRaisedHigh,
     outline = Bench.LightGlass,
-    outlineVariant = Color(0xFFCBCEC9),
+    outlineVariant = Bench.LightHairline,
     error = Bench.LightAlert,
     onError = Bench.LightRaised,
     errorContainer = Bench.LightAlertSlip,
-    onErrorContainer = Color(0xFF5A1405),
+    onErrorContainer = Bench.LightOnAlertSlip,
     inverseSurface = Bench.LightInk,
     inverseOnSurface = Bench.LightRaised,
 )

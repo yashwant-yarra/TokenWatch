@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Home-screen widgets; values mirror the app's dark bench. -->
-    <color name="widget_background">#FF14110E</color>
-    <color name="widget_text">#FFEDE3D2</color>
-    <color name="widget_muted">#FFAB9D88</color>
-    <color name="widget_glass">#FF8C7F6C</color>
-    <color name="widget_edge">#FF3A332B</color>
-    <color name="widget_error">#FFFF6A4D</color>
+    <color name="widget_background">#FF0B0C0D</color>
+    <color name="widget_text">#FFECEEF0</color>
+    <color name="widget_muted">#FF8E949A</color>
+    <color name="widget_glass">#FF6E747A</color>
+    <color name="widget_edge">#FF24272A</color>
+    <color name="widget_error">#FFFF5468</color>
 </resources>
