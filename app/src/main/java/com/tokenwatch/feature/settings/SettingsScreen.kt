@@ -53,7 +53,6 @@ import com.tokenwatch.core.ui.components.LoadingState
 import com.tokenwatch.core.ui.components.LocalBottomBarPadding
 import com.tokenwatch.core.ui.components.PlateButton
 import com.tokenwatch.core.ui.components.PlateStyle
-import com.tokenwatch.core.ui.components.SandGlass
 import com.tokenwatch.core.ui.components.ScaleSelector
 import com.tokenwatch.core.ui.components.ScaleSlider
 import com.tokenwatch.core.ui.components.Section
@@ -167,17 +166,23 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
                         enableAlerts,
                     )
                     if (settings.usageAlertsEnabled) {
-                        AlertLinePreview(settings.sessionAlertPercent, settings.weeklyAlertPercent)
                         LabeledGroup("Session: alert at % left") {
-                            ScaleSelector(ALERT_OPTIONS, settings.sessionAlertPercent, { "${100 - it}%" }, vm::setSessionAlert)
+                            ScaleSelector(alertOptions(settings.sessionAlertPercent), settings.sessionAlertPercent, { "${100 - it}%" }, vm::setSessionAlert)
                         }
                         LabeledGroup("Weekly: alert at % left") {
-                            ScaleSelector(ALERT_OPTIONS, settings.weeklyAlertPercent, { "${100 - it}%" }, vm::setWeeklyAlert)
+                            ScaleSelector(alertOptions(settings.weeklyAlertPercent), settings.weeklyAlertPercent, { "${100 - it}%" }, vm::setWeeklyAlert)
                         }
                         if (settings.refreshIntervalMinutes == 0) {
                             InfoNote("Alerts are checked whenever usage is read. Turn on background refresh to get them while the app is closed.")
                         }
                     }
+                }
+            }
+        }
+
+        item {
+            Arrive(3) {
+                Section(title = "Limit resets") {
                     ToggleRow(
                         "Notify when a limit resets",
                         "Re-reads the provider at each reset time and tells you once the page shows usage is back",
@@ -190,7 +195,7 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             item {
-                Arrive(3) {
+                Arrive(4) {
                     Section(title = "Quick Settings") {
                         Text(
                             "A tile with the limit closest to running out. Tap it to re-read.",
@@ -204,9 +209,9 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
         }
 
         item {
-            Arrive(4) {
+            Arrive(5) {
                 Section(title = "Your data") {
-                    PlateButton("Delete cached usage", { confirm = "history" }, Modifier.fillMaxWidth(), style = PlateStyle.OUTLINE)
+                    PlateButton("Delete usage and sign-ins", { confirm = "history" }, Modifier.fillMaxWidth(), style = PlateStyle.OUTLINE)
                 }
             }
         }
@@ -224,39 +229,13 @@ private fun SettingsBody(settings: AppSettings, vm: SettingsViewModel, modifier:
 
     when (confirm) {
         "history" -> BenchDialog(
-            title = "Delete cached usage?",
+            title = "Delete usage and sign-ins?",
             text = "Usage stored on this device and all web data in the app, including provider sign-ins, " +
                 "are removed. You'll need to sign in to each provider again.",
-            confirmLabel = "Delete",
+            confirmLabel = "Delete all",
             onConfirm = { confirm = null; vm.deleteLocalHistory() },
             onDismiss = { confirm = null },
         )
-    }
-}
-
-/** Two sample glasses showing where each alert line sits; the lines move as the limits change. */
-@Composable
-private fun AlertLinePreview(sessionUsed: Int, weeklyUsed: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(28.dp), verticalAlignment = Alignment.CenterVertically) {
-        listOf("Session" to sessionUsed, "Weekly" to weeklyUsed).forEach { (label, used) ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SandGlass(
-                    leftPercent = 60.0,
-                    sand = MaterialTheme.colorScheme.onSurfaceVariant,
-                    alertUsedPercent = used,
-                    width = 26.dp,
-                    height = 48.dp,
-                )
-                Column {
-                    Text(label, style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        "line at ${100 - used}% left",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -319,7 +298,10 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChang
 
 private const val DEFAULT_REFRESH_MINUTES = 15
 private const val MAX_REFRESH_MINUTES = 30
-private val ALERT_OPTIONS = listOf(50, 75, 80, 90, 95)
+private val ALERT_OPTIONS = listOf(75, 80, 90, 95)
+
+/** The alert choices (as percent used); a value saved before the list was trimmed stays visible and selected. */
+private fun alertOptions(current: Int) = (ALERT_OPTIONS + current).distinct().sorted()
 
 private fun minutesLabel(minutes: Int) = if (minutes == 1) "1 minute" else "$minutes minutes"
 

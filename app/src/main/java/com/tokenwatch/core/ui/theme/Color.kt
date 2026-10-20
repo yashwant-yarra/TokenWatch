@@ -27,7 +27,7 @@ internal object Bench {
     val LightInkMuted = Color(0xFF5C564D)
     val LightGlass = Color(0xFF8D877E)
     val LightHairline = Color(0xFFCBCEC9)
-    val LightAlert = Color(0xFFCF2A40)
+    val LightAlert = Color(0xFFC4243A)
     val LightAlertSlip = Color(0xFFFADADF)
     val LightOnAlertSlip = Color(0xFF5C0C1A)
 }

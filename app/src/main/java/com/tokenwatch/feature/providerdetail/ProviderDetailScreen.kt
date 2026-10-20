@@ -170,13 +170,23 @@ private fun DetailBody(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 ProviderMark(connection.provider, size = 26.dp)
-                Text(
-                    listOfNotNull(
-                        connectionLabel(connection.status),
-                        connection.planName.takeIf { caps.subscriptionInfo },
-                    ).joinToString(" · "),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                Column {
+                    Text(
+                        listOfNotNull(
+                            connectionLabel(connection.status),
+                            connection.planName.takeIf { caps.subscriptionInfo },
+                        ).joinToString(" · "),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    // When it was last read is the trust signal for every number below.
+                    snapshot.fetchedAt?.let {
+                        Text(
+                            "Read ${Format.ago(it, state.now)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
 
@@ -264,7 +274,7 @@ private fun DetailBody(
     }
 }
 
-/** Each window's history as percent used, over the chosen range. */
+/** Each window's history as percent left, over the chosen range. */
 @Composable
 private fun HistorySection(state: ProviderDetailUiState.Content, windows: List<QuotaWindow>, onRange: (HistoryRange) -> Unit) {
     val sand = ProviderColors.of(state.snapshot.provider)
@@ -281,7 +291,7 @@ private fun HistorySection(state: ProviderDetailUiState.Content, windows: List<Q
             val from = chartStart(rangeStart, history.segments.flatten().minOfOrNull { it.at }, state.now)
             val summary = listOfNotNull(
                 "${history.readings} ${if (history.readings == 1) "reading" else "readings"}",
-                history.peakUsed?.let { "peak ${Format.percent(it)} used" },
+                history.peakUsed?.let { "lowest ${Format.percent(100.0 - it)} left" },
                 history.resets.count { it.isAfter(from) }.takeIf { it > 0 }?.let { "$it ${if (it == 1) "reset" else "resets"}" },
             ).joinToString(" · ")
             Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {

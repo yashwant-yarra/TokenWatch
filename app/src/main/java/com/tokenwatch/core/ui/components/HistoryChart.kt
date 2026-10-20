@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,10 +61,11 @@ import java.util.Locale
 data class ChartLine(val name: String, val color: Color, val history: UsageHistory)
 
 /**
- * History as percent used over time (an unused window sits at 0): runs of readings (gaps stay gaps),
- * dashed marks where a line reset, and the alert line. One line per window; several lines share the
- * chart in the combined view, where only a lone line gets the sand fill. It draws in on open, and
- * dragging reads every line off at that moment with a needle and a haptic tick.
+ * History as percent left over time, like the glasses: lines drain toward 0 and jump back to 100 at a
+ * reset (marked by a tick on the baseline); long gaps stay gaps. The alert line stays rim ink until a
+ * line is near it. One line per window; several lines share the chart in the combined view, where
+ * only a lone line gets the sand fill. It draws in on open, and dragging reads every line off at that
+ * moment with a needle and a haptic tick.
  */
 @Composable
 fun HistoryChart(
@@ -139,35 +141,48 @@ fun HistoryChart(
                 },
         ) {
             val gutter = GUTTER.toPx()
-            val top = 14.dp.toPx()
+            val top = 26.dp.toPx()
             val bottom = size.height - 4.dp.toPx()
             // Inset on the right so the newest reading is never cut off at the edge.
             val plot = Rect(gutter, top, size.width - END_INSET.toPx(), bottom)
             val hair = 1.dp.toPx()
             fun x(at: Instant) = plot.left + plot.width * ((at.toEpochMilli() - from.toEpochMilli()).toFloat() / (to.toEpochMilli() - from.toEpochMilli()).coerceAtLeast(1))
-            fun y(used: Double) = plot.bottom - plot.height * (used / 100.0).toFloat()
+            // Plotted as percent left (100 at the top), the same way the glasses read.
+            fun y(used: Double) = plot.top + plot.height * (used / 100.0).toFloat()
 
-            // Engraved scale: 0 / 50 / 100 used.
-            val scale = TextStyle(fontFamily = Engraved, fontWeight = FontWeight.Medium, fontSize = 11.sp, color = muted)
-            listOf(100.0, 50.0, 0.0).forEach { level ->
-                drawLine(rule, Offset(plot.left, y(level)), Offset(plot.right, y(level)), strokeWidth = hair)
-                val label = measurer.measure("${level.toInt()}", scale)
-                drawText(label, topLeft = Offset(gutter - label.size.width - 6.dp.toPx(), y(level) - label.size.height / 2f))
+            // Engraved scale: 100 / 50 / 0 left, with its unit.
+            val scale = TextStyle(fontFamily = Engraved, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = muted)
+            listOf(0.0, 50.0, 100.0).forEach { used ->
+                drawLine(rule, Offset(plot.left, y(used)), Offset(plot.right, y(used)), strokeWidth = hair)
+                val label = measurer.measure("${(100 - used).toInt()}", scale)
+                drawText(label, topLeft = Offset(gutter - label.size.width - 6.dp.toPx(), y(used) - label.size.height / 2f))
+            }
+            // The unit heads the scale column, clear of the lines (which often run along 100).
+            if (scrub == null) {
+                val unit = measurer.measure("% left", scale)
+                drawText(unit, topLeft = Offset(0f, 0f))
             }
             alertUsed?.let { level ->
-                drawLine(alert, Offset(plot.left, y(level)), Offset(plot.right, y(level)), strokeWidth = hair, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())))
+                // Rim ink while every line is clear of it; alert only once one comes within reach.
+                val latest = lines.mapNotNull { it.history.segments.lastOrNull()?.lastOrNull()?.usedPercent }
+                val warn = latest.any { it >= level - ALERT_NEAR_POINTS }
+                drawLine(if (warn) alert else rim, Offset(plot.left, y(level)), Offset(plot.right, y(level)), strokeWidth = hair, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())))
             }
             lines.forEach { line ->
-                // With several lines, each line's resets are marked in its own color.
-                val mark = if (lines.size == 1) rim else line.color.copy(alpha = 0.6f)
+                // Resets are short ticks on the baseline, in the line's own color when several share the chart.
+                val mark = if (lines.size == 1) rim else line.color.copy(alpha = 0.8f)
                 line.history.resets.filter { it in from..to }.forEach { at ->
-                    drawLine(mark, Offset(x(at), plot.top), Offset(x(at), plot.bottom), strokeWidth = hair, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 3.dp.toPx())))
+                    drawLine(mark, Offset(x(at), plot.bottom), Offset(x(at), plot.bottom - 6.dp.toPx()), strokeWidth = 1.5.dp.toPx())
                 }
             }
 
             // The runs of readings, revealed left to right.
             clipRect(left = 0f, top = 0f, right = plot.left + (plot.width + END_INSET.toPx()) * reveal.value, bottom = size.height) {
-                lines.forEach { line ->
+                lines.forEachIndexed { index, line ->
+                    // ponytail: lines that sit on the same value (often 100% left) would hide each other, so
+                    // several lines are spread 2dp apart; scrubbing still reads the exact values.
+                    val nudge = if (lines.size > 1) (index - (lines.size - 1) / 2f) * 2.dp.toPx() else 0f
+                    translate(top = nudge) {
                     line.history.drawnRuns().forEach { segment ->
                         val last = segment.last()
                         if (segment.size > 1) {
@@ -189,6 +204,7 @@ fun HistoryChart(
                         // The latest reading of each run gets a dot, so even a short run is easy to see.
                         drawCircle(line.color, radius = 3.dp.toPx(), center = Offset(x(last.at), y(last.usedPercent)))
                     }
+                    }
                 }
             }
 
@@ -202,9 +218,9 @@ fun HistoryChart(
                     drawCircle(lines[index].color, radius = 5.dp.toPx(), center = center, style = Stroke(2.dp.toPx()))
                 }
                 val reading = if (lines.size == 1) {
-                    "${Format.percent(values.first().second.usedPercent)} used"
+                    "${Format.percent(100.0 - values.first().second.usedPercent)} left"
                 } else {
-                    values.joinToString("  ") { (index, p) -> "${lines[index].name} ${Format.percent(p.usedPercent)}" }
+                    values.joinToString("  ") { (index, p) -> "${lines[index].name} ${Format.percent(100.0 - p.usedPercent)}" }
                 }
                 val label = measurer.measure(
                     "$reading · ${readFormat.format(at.atZone(zone))}",
@@ -218,12 +234,15 @@ fun HistoryChart(
             }
         }
         Row(Modifier.fillMaxWidth().padding(start = GUTTER, top = 2.dp)) {
-            Text(fromLabel, style = MaterialTheme.typography.labelSmall, color = muted)
+            Text(fromLabel, style = MaterialTheme.typography.labelMedium, color = muted)
             Spacer(Modifier.weight(1f))
-            Text("now", style = MaterialTheme.typography.labelSmall, color = muted)
+            Text("now", style = MaterialTheme.typography.labelMedium, color = muted)
         }
     }
 }
 
-private val GUTTER = 30.dp
+private val GUTTER = 34.dp
 private val END_INSET = 6.dp
+
+/** Percentage points from the alert line at which the chart's line turns from rim ink to alert. */
+private const val ALERT_NEAR_POINTS = 10

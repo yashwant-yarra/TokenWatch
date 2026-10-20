@@ -65,6 +65,7 @@ import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ConnectionStatus
 import com.tokenwatch.domain.model.ProviderSnapshot
+import com.tokenwatch.domain.model.QuotaWindow
 import java.time.Instant
 import java.util.Locale
 
@@ -159,20 +160,10 @@ fun DashboardContent(
 /** One sentence answering "am I about to hit a limit?" before any glass is read. */
 @Composable
 private fun Verdict(state: DashboardUiState.Content, onRefresh: () -> Unit) {
-    val lowest = state.providers
+    val windows = state.providers
         .filter { it.isActive }
-        .flatMap { snapshot -> snapshot.quotaWindows.map { snapshot to it } }
-        .filter { it.second.leftPercent != null }
-        .minByOrNull { it.second.leftPercent ?: Double.MAX_VALUE }
-    val sentence = when {
-        lowest == null -> "No readings yet. Pull down to turn the glasses."
-        else -> {
-            val (snapshot, window) = lowest
-            val name = "${snapshot.provider.displayName} ${window.label.lowercase(Locale.getDefault())}"
-            val left = Format.percent(window.leftPercent ?: 0.0)
-            if (window.isPastLine(state.limits)) "$name is past the line: $left left." else "Lowest is $name, $left left."
-        }
-    }
+        .flatMap { snapshot -> snapshot.quotaWindows.map { snapshot.provider to it } }
+    val sentence = verdict(windows, state.limits, state.now)
     Column(
         Modifier
             .fillMaxWidth()
@@ -192,6 +183,33 @@ private fun Verdict(state: DashboardUiState.Content, onRefresh: () -> Unit) {
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
+    }
+}
+
+/** How close (in percentage points) a window may come to its alert line before it stops being "all clear". */
+private const val NEAR_LINE_POINTS = 10
+
+/**
+ * The dashboard's one-line answer to "can I keep going, and until when?". A window past its line
+ * leads, then one close to it; otherwise it's all clear and names the lowest window. The reset
+ * time is added only when the page gave one that is still ahead.
+ */
+internal fun verdict(windows: List<Pair<AiProvider, QuotaWindow>>, limits: AlertLimits?, now: Instant): String {
+    val read = windows.filter { it.second.leftPercent != null }.sortedBy { it.second.leftPercent }
+    if (read.isEmpty()) return "No readings yet. Pull down to turn the glasses."
+    fun near(window: QuotaWindow): Boolean {
+        val line = limits?.forWindow(window) ?: return false
+        return (window.usedPercent ?: return false) >= line - NEAR_LINE_POINTS
+    }
+    val (provider, window) = read.firstOrNull { it.second.isPastLine(limits) } ?: read.firstOrNull { near(it.second) } ?: read.first()
+    val name = "${provider.displayName} ${window.label.lowercase(Locale.getDefault())}"
+    val reading = "${Format.percent(window.leftPercent ?: 0.0)} left" +
+        (window.resetsAt?.takeIf { it.isAfter(now) }?.let { ", " + Format.resetLabel(it, now).replaceFirstChar(Char::lowercaseChar) } ?: "")
+    return when {
+        window.isPastLine(limits) && limits == null -> "$name is nearly out: $reading."
+        window.isPastLine(limits) -> "${name.replaceFirstChar(Char::uppercaseChar)} is past your line: $reading."
+        near(window) -> "${name.replaceFirstChar(Char::uppercaseChar)} is close to your line: $reading."
+        else -> "All clear. Lowest is $name, $reading."
     }
 }
 

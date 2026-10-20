@@ -56,7 +56,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     }
 }
 
-/** Every provider on one graph, as percent used, for one kind of window at a time. */
+/** Every provider on one graph, as percent left, for one kind of window at a time. */
 @Composable
 private fun HistoryBody(
     state: HistoryUiState,
@@ -141,5 +141,5 @@ private fun LegendRow(line: ProviderHistory) {
 
 private fun summary(line: ProviderHistory): String = listOfNotNull(
     "${line.history.readings} ${if (line.history.readings == 1) "reading" else "readings"}",
-    line.history.peakUsed?.let { "peak ${Format.percent(it)} used" },
+    line.history.peakUsed?.let { "lowest ${Format.percent(100.0 - it)} left" },
 ).joinToString(" · ")

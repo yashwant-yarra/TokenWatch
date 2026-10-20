@@ -19,7 +19,7 @@ colors:
   ink-muted-light: "#5C564D"
   glass-rim-light: "#8D877E"
   hairline-light: "#CBCEC9"
-  alert-light: "#CF2A40"
+  alert-light: "#C4243A"
   alert-slip-light: "#FADADF"
   on-alert-slip-light: "#5C0C1A"
   sand-claude-dark: "#E08B6B"
@@ -205,7 +205,7 @@ A neutral bench in two grounds (graphite and porcelain), one ink per ground, thr
 - **Provider Sands** (`sand-claude-*` terracotta, `sand-codex-*` OpenAI green, `sand-gemini-*` Gemini blue, each the provider's own brand hue): the sand inside a provider's glasses and nothing else. Each has a dark-ground and light-ground value tuned for contrast on its bench. Never used for text, controls or fills outside a glass.
 
 ### Tertiary
-- **Alert Rose** (`alert-dark` / `alert-light`): the user's alert line (dashed, across and past the upper bulb), a percent numeral once its window is past the line, and the errata slip (`alert-slip-*` ground with `on-alert-slip-*` text), the one place it fills a surface. Mapped to Material `error`.
+- **Alert Rose** (`alert-dark` / `alert-light`): the user's alert line once a window is within 10 points of it or past it (dashed, across and past the upper bulb; rim ink until then), a percent numeral once its window is past the line, and the errata slip (`alert-slip-*` ground with `on-alert-slip-*` text), the one place it fills a surface. Mapped to Material `error`.
 
 ### Neutral
 - **Graphite Bench** (`bench-ground-dark`) / **Porcelain Bench** (`bench-ground-light`): the screen ground, header and bench bar, window and splash.
@@ -216,7 +216,7 @@ A neutral bench in two grounds (graphite and porcelain), one ink per ground, thr
 - **Glass Cap** (`glass-cap-*`): the solid metal caps a glass stands between.
 
 ### Named Rules
-**The Held-Back Alert Rule.** The alert color appears only for alerts: the alert line, a past-the-line numeral, an errata slip. A screen with nothing past its line shows no alert red at all. It is rose, not vermilion, so it never reads as Claude's terracotta sand.
+**The Held-Back Alert Rule.** The alert color appears only for alerts: the alert line, a past-the-line numeral, an errata slip. A screen with nothing near or past its line shows no alert red at all: alert lines stay rim ink until the sand comes within 10 points of them. It is rose, not vermilion, so it never reads as Claude's terracotta sand.
 
 **The One Ink Rule.** Controls are ink on bench or bench on ink. No control takes a provider sand or a third hue.
 
@@ -246,7 +246,7 @@ A neutral bench in two grounds (graphite and porcelain), one ink per ground, thr
 Single-column, phone-first, edge-to-edge. Scrolling content sits on a 20dp gutter left and right and ends 24dp above the bench bar. Screens are a header (64dp, below the status bar) then a list of ruled blocks.
 
 - **Section:** a hairline rule, then 18dp top / 26dp bottom padding, with a 14dp stack between heading and content.
-- **Dashboard rack:** a verdict sentence (20dp below), then one ruled shelf per provider, sorted least-left first. The first provider with a reading gets tall glasses (64x148dp, numeral under the glass); the rest get compact glasses (34x72dp, numeral to the right, 12dp gap). A provider's windows sit side by side, equal width, 16dp apart, in a fixed order so they never swap between reads. Shelf rows are 14dp vertical padding; a shelf ends 24dp below its glasses (12dp when an errata slip follows).
+- **Dashboard rack:** a verdict sentence (20dp below), then one ruled shelf per provider, sorted least-left first. The first provider with a reading gets tall glasses (64x148dp, centred in their half with the numeral and captions centred under the glass); the rest get compact glasses (34x72dp, numeral to the right, 12dp gap). A provider's windows sit side by side, equal width, 16dp apart, in a fixed order so they never swap between reads. Shelf rows are 14dp vertical padding; a shelf ends 24dp below its glasses (12dp when an errata slip follows).
 - **Accounts rows:** mini glasses (18x34dp) beside each account.
 - **Settings:** alert-line preview glasses (26x48dp) show where the line will sit.
 - **Pull to refresh:** pulled content drops by a 72dp gap (stretch up to 1.4x) so the turning glass sits in its own space instead of over a line.
@@ -284,7 +284,7 @@ A 48dp row of engraved cells inside a 3dp rim border, divided by rim hairlines a
 A ruled scale (rim baseline with minor 6dp and major 12dp ticks every 5 steps), an ink track to the value, and an ink needle with a 12x9dp head. The needle springs (damping 0.6); a tick haptic fires on each step passed. Exposes progress and set-progress semantics.
 
 ### Navigation (Bench Bar and Bench Header)
-- **Bench bar:** a 68dp bar on the bench, above a hairline rule, with three glyph tabs (Usage, Accounts, Settings). A 28x3dp ink rule springs to the chosen tab (damping 0.55); the selected glyph lifts 2dp and turns ink with a SemiBold label; unselected tabs are muted ink. Tick haptic on switch; tab semantics.
+- **Bench bar:** a 68dp bar on the bench, above a hairline rule, with four glyph tabs (Usage, History, Accounts, Settings). A 28x3dp ink rule springs to the chosen tab (damping 0.55); the selected glyph lifts 2dp and turns ink with a SemiBold label; unselected tabs are muted ink. Tick haptic on switch; tab semantics.
 - **Bench header:** 64dp, engraved title (30sp top-level, 24sp with Back), drawn Back glyph button when nested.
 - **Transitions:** screens slide a sixth of the width and settle on a spring with a short fade; Back reverses.
 
@@ -301,10 +301,13 @@ The app's own hairline icon set drawn on canvas at a 24-unit grid with a 1.6dp r
 The core component, drawn by one shared routine for the app, the refresh indicator and the widgets.
 - **Anatomy:** upper and lower bulbs as bezier paths, body gradient, outer rim hairline plus a 35% inner rim, two highlight streaks and a right rim light, solid caps with a lit edge, contact shadow.
 - **Sand:** level follows area (sqrt mapping, so half the sand fills half the bulb); the upper surface is dished, the lower pile heaped; shaded darker at the walls and base, lifted at the crest, with fixed light and dark speckle. A thin stream and five accelerating grains fall while sand remains above and below.
-- **Marks:** rim graduations at 25/50/75% left on the upper bulb; the user's alert line as a dashed rose-red line running across and past the bulb.
+- **Marks:** rim graduations at 25/50/75% left on the upper bulb; the user's alert line as a dashed line running across and past the bulb over a band of bench (so it reads on sand), in rim ink while the window is clear and rose once the sand is within 10 points of it.
 - **States:** stale or unreported draws a dashed outline and half-strength sand; sand settles to a new reading on a soft spring; while re-reading, the glass turns full sprung circles and always lands upright.
 - **Motion host (Sand Bench):** one shared frame clock for every grain and the gravity sensor tilting the sand surface, clamped to 0.35 rad; both pause in the background and under Remove animations.
 - **Sizes:** tall 64x148dp, compact 34x72dp, settings preview 26x48dp, mini 18x34dp, turning indicator 18x30dp.
+
+### History Chart
+Percent left over time, the same direction as the glasses: a line drains toward 0 and jumps back to 100 at a reset, marked by a short tick on the baseline. Engraved 100/50/0 scale with a "% left" unit; readings more than 4 hours apart stay unjoined. A lone line gets a sand fill; several lines share the chart without fills, spread 2dp apart so equal values don't hide each other. The alert line follows the glass rule (rim ink until a line comes near). Dragging reads every line with a needle, a readout plate and a tick haptic.
 
 ### Turning Glass (refresh and loading)
 A small ink glass. In pull-to-refresh it drops with the pull, tips toward a flip, ticks at the threshold, then keeps flipping with a spring while usage is re-read; a confirm haptic lands when the read finishes. Alone, it is the loading state.

@@ -164,10 +164,12 @@ data class GlassLook(
     val capEdge: Color,
     val shadow: Color,
     val alert: Color,
+    /** The bench the glass stands on; a band of it under the alert line keeps the dashes legible over sand. */
+    val ground: Color,
 ) {
     companion object {
-        /** For drawing outside Compose (home-screen widgets). */
-        fun of(dark: Boolean, rim: Color, ink: Color, alert: Color) = GlassLook(
+        /** For drawing outside Compose (home-screen widgets, which draw no alert line). */
+        fun of(dark: Boolean, rim: Color, ink: Color, alert: Color, ground: Color = Color.Transparent) = GlassLook(
             rim = rim,
             body = ink.copy(alpha = if (dark) 0.05f else 0.04f),
             highlight = Color.White.copy(alpha = if (dark) 0.22f else 0.75f),
@@ -175,6 +177,7 @@ data class GlassLook(
             capEdge = if (dark) Color(0xFF5C6268) else Color(0xFF8A847A),
             shadow = Color.Black.copy(alpha = if (dark) 0.55f else 0.18f),
             alert = alert,
+            ground = ground,
         )
     }
 }
@@ -183,8 +186,11 @@ data class GlassLook(
 fun rememberGlassLook(): GlassLook {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalIsDarkTheme.current
-    return remember(scheme, dark) { GlassLook.of(dark, scheme.outline, scheme.onSurface, scheme.error) }
+    return remember(scheme, dark) { GlassLook.of(dark, scheme.outline, scheme.onSurface, scheme.error, scheme.background) }
 }
+
+/** How close (as a fraction left) the sand must come to the alert line before the line turns alert. */
+private const val ALERT_NEAR = 0.10f
 
 // Fixed grain positions (normalized), so the speckle is the same on every frame and every glass.
 private val GRAINS: List<Offset> = Random(7).let { r -> List(140) { Offset(r.nextFloat(), r.nextFloat()) } }
@@ -300,16 +306,15 @@ internal fun DrawScope.drawGlass(
         val y = mid - sqrt(mark) * bulb
         drawLine(look.rim, Offset(0f, y), Offset(side * 0.75f, y), strokeWidth = hair)
     }
-    // The user's alert line, across the bulb and out past it like an engraved mark.
+    // The user's alert line, across the bulb and out past it like an engraved mark. It stays in rim
+    // ink while the window is clear and turns alert only once the sand is near or past it, so an
+    // all-clear screen shows no alert color. A band of bench under it keeps the dashes legible on sand.
     if (alertLeft != null && alertLeft in 0f..1f) {
         val y = mid - sqrt(alertLeft) * bulb
-        drawLine(
-            look.alert,
-            Offset(0f, y),
-            Offset(w, y),
-            strokeWidth = hair,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx())),
-        )
+        val warn = left != null && !stale && left <= alertLeft + ALERT_NEAR
+        val dash = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))
+        drawLine(look.ground.copy(alpha = 0.7f), Offset(0f, y), Offset(w, y), strokeWidth = hair * 2.6f, pathEffect = dash)
+        drawLine(if (warn) look.alert else look.rim, Offset(0f, y), Offset(w, y), strokeWidth = hair, pathEffect = dash)
     }
 
     val outline = Stroke(
