@@ -45,9 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tokenwatch.core.ui.theme.Engraved
 import com.tokenwatch.core.util.Format
-import com.tokenwatch.domain.usecase.HISTORY_MAX_GAP
 import com.tokenwatch.domain.usecase.HistoryPoint
+import com.tokenwatch.domain.usecase.SCRUB_REACH
 import com.tokenwatch.domain.usecase.UsageHistory
+import com.tokenwatch.domain.usecase.drawnRuns
 import com.tokenwatch.domain.usecase.nearestReadings
 import java.time.Duration
 import java.time.Instant
@@ -89,8 +90,7 @@ fun HistoryChart(
     val haptics = rememberHaptics()
     val zone = remember { ZoneId.systemDefault() }
     val span = Duration.between(from, to)
-    // Scrubbing reads a line only within this reach of the finger, so a far-off reading isn't passed off as "then".
-    val reach = maxOf(HISTORY_MAX_GAP, span.dividedBy(30))
+    val reach = maxOf(SCRUB_REACH, span.dividedBy(30))
     val readFormat = remember { DateTimeFormatter.ofPattern("EEE HH:mm", Locale.getDefault()) }
 
     val reveal = remember { Animatable(0f) }
@@ -168,7 +168,7 @@ fun HistoryChart(
             // The runs of readings, revealed left to right.
             clipRect(left = 0f, top = 0f, right = plot.left + (plot.width + END_INSET.toPx()) * reveal.value, bottom = size.height) {
                 lines.forEach { line ->
-                    line.history.segments.forEach { segment ->
+                    line.history.drawnRuns().forEach { segment ->
                         val last = segment.last()
                         if (segment.size > 1) {
                             val path = Path().apply {

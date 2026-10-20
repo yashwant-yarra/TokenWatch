@@ -28,8 +28,15 @@ data class UsageHistory(
     val peakUsed: Double?,
 )
 
-/** Readings further apart than this aren't joined: what happened between them wasn't seen. */
-val HISTORY_MAX_GAP: Duration = Duration.ofMinutes(90)
+/**
+ * Readings further apart than this aren't joined: what happened between them wasn't seen. Android
+ * often runs background reads only about hourly, so this allows a couple of missed runs, while
+ * staying under a 5-hour session so a whole session can't hide inside a joined gap.
+ */
+val HISTORY_MAX_GAP: Duration = Duration.ofHours(4)
+
+/** Scrubbing reads a line only within this reach of the finger, so a far-off reading isn't passed off as "then". */
+val SCRUB_REACH: Duration = Duration.ofMinutes(90)
 
 /**
  * Builds one window's history from its stored readings. Readings without a percent are skipped
@@ -57,6 +64,30 @@ fun usageHistory(readings: List<QuotaWindow>, maxGap: Duration = HISTORY_MAX_GAP
         readings = usable.size,
         peakUsed = segments.flatten().maxOfOrNull { it.usedPercent },
     )
+}
+
+/**
+ * The lines to draw: segments split only by a reset are joined, holding the last reading until the
+ * reset and then dropping to 0, so the chart reads as one sawtooth. Long gaps stay gaps. For drawing
+ * only; the added corner points weren't read, so scrubbing uses [UsageHistory.segments].
+ */
+fun UsageHistory.drawnRuns(maxGap: Duration = HISTORY_MAX_GAP): List<List<HistoryPoint>> {
+    val runs = mutableListOf<MutableList<HistoryPoint>>()
+    for (segment in segments) {
+        val run = runs.lastOrNull()
+        val last = run?.last()
+        val first = segment.first()
+        if (run == null || last == null || Duration.between(last.at, first.at) > maxGap) {
+            runs.add(segment.toMutableList())
+            continue
+        }
+        // Within the gap limit, the split was a reset. A stale reset time is clamped between the readings.
+        val resetAt = (resets.lastOrNull { !it.isAfter(first.at) } ?: last.at).coerceIn(last.at, first.at)
+        run += HistoryPoint(resetAt, last.usedPercent)
+        run += HistoryPoint(resetAt, 0.0)
+        run += segment
+    }
+    return runs
 }
 
 private fun resetBetween(before: QuotaWindow, usedBefore: Double, after: QuotaWindow, usedAfter: Double): Instant? {

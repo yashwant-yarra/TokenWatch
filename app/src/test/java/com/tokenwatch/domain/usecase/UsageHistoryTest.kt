@@ -41,11 +41,32 @@ class UsageHistoryTest {
     }
 
     @Test
+    fun oneMissedHourlyReadDoesNotBreakTheLine() {
+        // Android runs background reads about hourly; one skipped run leaves a ~2 h gap.
+        val series = usageHistory(listOf(reading(0, 10.0), reading(65, 20.0), reading(195, 30.0)))
+        assertEquals(listOf(listOf(10.0, 20.0, 30.0)), used(series))
+    }
+
+    @Test
     fun aResetStartsANewSegmentAndIsMarkedAtItsTime() {
         val resetAt = at(60)
         val series = usageHistory(listOf(reading(0, 50.0, resetAt), reading(30, 70.0, resetAt), reading(70, 0.0, at(360))))
         assertEquals(listOf(listOf(50.0, 70.0), listOf(0.0)), used(series))
         assertEquals(listOf(resetAt), series.resets)
+    }
+
+    @Test
+    fun theDrawnLineDropsToZeroAtAResetInsteadOfBreaking() {
+        val resetAt = at(60)
+        val series = usageHistory(listOf(reading(0, 50.0, resetAt), reading(30, 70.0, resetAt), reading(70, 5.0, at(360))))
+        val drawn = series.drawnRuns().map { run -> run.map { it.at to it.usedPercent } }
+        assertEquals(listOf(listOf(at(0) to 50.0, at(30) to 70.0, resetAt to 70.0, resetAt to 0.0, at(70) to 5.0)), drawn)
+    }
+
+    @Test
+    fun theDrawnLineStillBreaksAtALongGapEvenAcrossAReset() {
+        val series = usageHistory(listOf(reading(0, 60.0), reading(600, 5.0)))
+        assertEquals(listOf(listOf(60.0), listOf(5.0)), series.drawnRuns().map { run -> run.map { it.usedPercent } })
     }
 
     @Test
