@@ -5,6 +5,9 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewDatabase
 import android.webkit.WebStorage
+import androidx.webkit.Profile
+import androidx.webkit.ProfileStore
+import androidx.webkit.WebViewFeature
 import com.tokenwatch.data.web.UsagePageSpec
 import com.tokenwatch.domain.model.AiProvider
 
@@ -13,8 +16,14 @@ import com.tokenwatch.domain.model.AiProvider
  * deleting their site storage. Must run on the main thread.
  */
 fun signOutOfWebSession(provider: AiProvider) {
+    val spec = UsagePageSpec.forProvider(provider)
+    // A provider with its own cookie store holds nothing else, so all of it goes.
+    webProfileOf(spec)?.let { profile ->
+        profile.clear()
+        return
+    }
     val cookies = CookieManager.getInstance()
-    UsagePageSpec.forProvider(provider).sessionDomains.forEach { domain ->
+    spec.sessionDomains.forEach { domain ->
         val url = "https://$domain"
         cookieNames(cookies.getCookie(url)).forEach { name ->
             // Only Path=/ cookies are visible here; sign-in cookies use it, so narrower paths are left.
@@ -24,6 +33,17 @@ fun signOutOfWebSession(provider: AiProvider) {
         WebStorage.getInstance().deleteOrigin(url)
     }
     cookies.flush()
+}
+
+/** [spec]'s own cookie store, or null when it shares the app's (or this phone's WebView can't keep separate ones). Main thread only. */
+internal fun webProfileOf(spec: UsagePageSpec): Profile? = spec.webProfile
+    ?.takeIf { WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE) }
+    ?.let { ProfileStore.getInstance().getOrCreateProfile(it) }
+
+private fun Profile.clear() {
+    cookieManager.removeAllCookies(null)
+    cookieManager.flush()
+    webStorage.deleteAllData()
 }
 
 /** Names from a `Cookie` header value such as `a=1; b=2`. */
@@ -37,6 +57,7 @@ fun clearAllWebData(context: Context) {
         flush()
     }
     WebStorage.getInstance().deleteAllData()
+    AiProvider.entries.mapNotNull { webProfileOf(UsagePageSpec.forProvider(it)) }.forEach { it.clear() }
     WebViewDatabase.getInstance(context).clearHttpAuthUsernamePassword()
     WebView(context).apply {
         clearCache(true)

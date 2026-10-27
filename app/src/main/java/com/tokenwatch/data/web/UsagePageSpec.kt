@@ -21,18 +21,38 @@ data class UsagePageSpec(
         AiProvider.GEMINI -> setOf("gemini.google.com", "google.com")
     }
 
+    /**
+     * Gemini reads whichever Google account is signed in, so it keeps its own cookie store. Otherwise a
+     * "Continue with Google" for ChatGPT or Claude becomes Gemini's account too. The others stay in the
+     * shared store, where their existing sign-ins already live.
+     */
+    val webProfile: String? = if (provider == AiProvider.GEMINI) "gemini" else null
+
     fun allows(url: String): Boolean = runCatching {
         val uri = java.net.URI(url)
         val host = uri.host?.lowercase() ?: return@runCatching false
-        uri.scheme == "https" && allowedHosts.any { host == it || host.endsWith(".$it") }
+        uri.scheme == "https" && (
+            allowedHosts.any { host == it || host.endsWith(".$it") } ||
+                GOOGLE_HOST in allowedHosts && GOOGLE_COUNTRY_HOST.matches(host)
+            )
     }.getOrDefault(false)
 
     companion object {
+        // Google sign-in ends by setting its cookies on accounts.youtube.com and then on the country's own
+        // sign-in address (accounts.google.co.in in India); blocking either leaves sign-in hanging after
+        // 2-step verification.
+        private const val GOOGLE_HOST = "accounts.google.com"
+        private val GOOGLE_SIGN_IN = setOf(GOOGLE_HOST, "accounts.youtube.com")
+
+        // Country forms only: google.<cc>, google.co.<cc>, google.com.<cc>, with a two-letter country code.
+        // ponytail: trusts that com.<cc> and co.<cc> are registry-run in every country; list them if one isn't.
+        private val GOOGLE_COUNTRY_HOST = Regex("accounts\\.google\\.(?:co\\.|com\\.)?[a-z]{2}")
+
         fun forProvider(provider: AiProvider): UsagePageSpec = when (provider) {
             AiProvider.CLAUDE -> UsagePageSpec(
                 provider,
                 "https://claude.ai/settings/usage",
-                setOf("claude.ai", "auth.anthropic.com", "accounts.google.com", "appleid.apple.com"),
+                setOf("claude.ai", "auth.anthropic.com", "appleid.apple.com") + GOOGLE_SIGN_IN,
                 // The plan ("Pro") sits under the "Your usage" heading, outside the quota block.
                 extractionScript(
                     "section",
@@ -48,7 +68,7 @@ data class UsagePageSpec(
                 "https://chatgpt.com/settings/usage?tab=overview",
                 // All of openai.com: sign-in passes through several of its subdomains, and blocking any of
                 // them stalls the flow. ChatGPT's sign-in page also offers Google and Apple.
-                setOf("chatgpt.com", "openai.com", "accounts.google.com", "appleid.apple.com"),
+                setOf("chatgpt.com", "openai.com", "appleid.apple.com") + GOOGLE_SIGN_IN,
                 // Each limit is a div block: "5-hour limit / Resets in 5h 0m / 100% left".
                 extractionScript("div", "5[ -]hour limit|weekly limit", accountScript = CHATGPT_ACCOUNT),
                 // Signed out, the usage page falls back to the ChatGPT home page instead of login,
@@ -58,7 +78,7 @@ data class UsagePageSpec(
             AiProvider.GEMINI -> UsagePageSpec(
                 provider,
                 "https://gemini.google.com/usage",
-                setOf("gemini.google.com", "accounts.google.com"),
+                setOf("gemini.google.com") + GOOGLE_SIGN_IN,
                 // The plan badge ("PRO") sits under the "Usage limits" heading, outside the quota blocks, so it's read
                 // from the page text, anchored to that heading so an "Upgrade to Pro" banner can't pass for the plan.
                 // Labels moved from <p> to <strong> in 2026-10; both are read.
@@ -68,6 +88,9 @@ data class UsagePageSpec(
                     headingPlanPattern = "usage limits\\s+(pro|ultra|plus)\\b",
                     accountScript = GOOGLE_ACCOUNT,
                 ),
+                // Gemini's own sign-in returns to the chat page, so sign-in starts at Google and asks to come
+                // back to the usage page instead.
+                signInUrl = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fgemini.google.com%2Fusage",
             )
         }
 

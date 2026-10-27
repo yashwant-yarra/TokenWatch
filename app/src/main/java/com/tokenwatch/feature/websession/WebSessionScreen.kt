@@ -13,8 +13,11 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewCompat
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -100,6 +104,12 @@ private fun UsageWebView(
     val usageHost = remember(spec) { Uri.parse(spec.url).host }
     val webView = remember(spec.provider) { WebView(context) }
     var blockedHost by remember { mutableStateOf<String?>(null) }
+    var popup by remember { mutableStateOf<WebView?>(null) }
+    DisposableEffect(popup) {
+        val shown = popup
+        onDispose { shown?.destroy() }
+    }
+    BackHandler(enabled = popup != null) { popup = null }
     var pageUrl by remember { mutableStateOf<String?>(null) }
     val pageHost = pageUrl?.let { Uri.parse(it).host }
 
@@ -122,18 +132,28 @@ private fun UsageWebView(
     }
 
     Column(modifier.fillMaxSize()) {
-        AndroidView(
-            factory = {
-                webView.apply {
-                    configureForUsagePage(spec, onBlocked = { blockedHost = it }, onAllowedPageStarted = {
-                        blockedHost = null
-                        pageUrl = it
-                    })
-                    loadUrl(spec.signInUrl)
-                }
-            },
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-        )
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            AndroidView(
+                factory = {
+                    webView.apply {
+                        configureForUsagePage(
+                            spec,
+                            onBlocked = { blockedHost = it },
+                            onAllowedPageStarted = {
+                                blockedHost = null
+                                pageUrl = it
+                            },
+                            onPopup = { popup = it },
+                        )
+                        loadUrl(spec.signInUrl)
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+            popup?.let { shown ->
+                key(shown) { AndroidView(factory = { shown }, modifier = Modifier.fillMaxSize()) }
+            }
+        }
         Rule()
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
@@ -161,7 +181,13 @@ internal fun WebView.configureForUsagePage(
     spec: UsagePageSpec,
     onBlocked: (String?) -> Unit = {},
     onAllowedPageStarted: (String) -> Unit = {},
+    // Shows a sign-in popup (or null when it closes). Without it, popups are refused.
+    onPopup: ((WebView?) -> Unit)? = null,
+    // Called when the page closes its own window (a popup finishing).
+    onClose: () -> Unit = {},
 ) {
+    // Must come before anything else touches this web view.
+    webProfileOf(spec)?.let { WebViewCompat.setProfile(this, it.name) }
     // Inspectable from a computer in debug builds only, for fixing page readers; never in release.
     WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
     CookieManager.getInstance().setAcceptCookie(true)
@@ -175,11 +201,23 @@ internal fun WebView.configureForUsagePage(
         allowUniversalAccessFromFileURLs = false
         mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
         safeBrowsingEnabled = true
-        javaScriptCanOpenWindowsAutomatically = false
-        setSupportMultipleWindows(false)
+        // Claude's "Continue with Google" signs in through a popup that hands the result back to the page.
+        // Refused, the popup's last page loads in place of the page and stays blank.
+        javaScriptCanOpenWindowsAutomatically = onPopup != null
+        setSupportMultipleWindows(onPopup != null)
     }
     webChromeClient = object : WebChromeClient() {
-        override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean = false
+        override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {
+            val transport = resultMsg?.obj as? WebView.WebViewTransport
+            // Only popups the user tapped for; the popup gets the same host lock and cookie store.
+            if (onPopup == null || !isUserGesture || transport == null) return false
+            val popup = WebView(context).apply { configureForUsagePage(spec, onBlocked, onClose = { onPopup(null) }) }
+            transport.webView = popup
+            resultMsg.sendToTarget()
+            onPopup(popup)
+            return true
+        }
+        override fun onCloseWindow(window: WebView?) = onClose()
         override fun onPermissionRequest(request: android.webkit.PermissionRequest) = request.deny()
         override fun onGeolocationPermissionsShowPrompt(origin: String?, callback: android.webkit.GeolocationPermissions.Callback) {
             callback.invoke(origin, false, false)
@@ -187,6 +225,12 @@ internal fun WebView.configureForUsagePage(
     }
     webViewClient = object : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            // Google's optional "add a selfie" prompt comes after sign-in has finished, and its "Not now"
+            // doesn't work in a web view. Skip it and go on to the usage page.
+            if (request.isForMainFrame && request.url.host == GOOGLE_ACCOUNT_HOST) {
+                view.loadUrl(spec.url)
+                return true
+            }
             val blocked = request.isForMainFrame && !spec.allows(request.url.toString())
             // Say so instead of leaving the page's own spinner running forever.
             if (blocked) onBlocked(request.url.host)
@@ -217,6 +261,7 @@ internal fun WebView.extract(spec: UsagePageSpec, onResult: (String?) -> Unit) =
 
 private const val GOOGLE_HOST = "accounts.google.com"
 private const val GEMINI_HOST = "gemini.google.com"
+private const val GOOGLE_ACCOUNT_HOST = "myaccount.google.com"
 
 // Google refuses sign-in for other companies' apps inside embedded web views, and that check can't be
 // honestly worked around. Email sign-in reaches the same account.
