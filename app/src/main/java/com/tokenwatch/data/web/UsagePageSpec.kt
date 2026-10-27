@@ -61,8 +61,9 @@ data class UsagePageSpec(
                 setOf("gemini.google.com", "accounts.google.com"),
                 // The plan badge ("PRO") sits under the "Usage limits" heading, outside the quota blocks, so it's read
                 // from the page text, anchored to that heading so an "Upgrade to Pro" banner can't pass for the plan.
+                // Labels moved from <p> to <strong> in 2026-10; both are read.
                 extractionScript(
-                    "p",
+                    "p, strong",
                     "current usage|weekly limit",
                     headingPlanPattern = "usage limits\\s+(pro|ultra|plus)\\b",
                     accountScript = GOOGLE_ACCOUNT,
@@ -176,7 +177,7 @@ data class UsagePageSpec(
                 return labels.map((match, i) => ({label: match[0], text: block.text.slice(match.index + match[0].length, labels[i + 1]?.index ?? block.text.length)}));
               }).map(({label, text}) => {
                 const percent = text.match(/(\d+(?:\.\d+)?)\s*%\s*(used|remaining|left)/i);
-                const resetText = text.match(/resets?\s+(?:in\s+(?:\d+\s*d(?:ays?)?\s*)?\d+\s*h(?:r|ours?)?\s*(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
+                const resetText = text.match(/resets?\s+(?:in\s+(?=\d)(?:\d+\s*d(?:ays?)?\s*)?(?:\d+\s*h(?:r|ours?)?\s*)?(?:\d+\s*m(?:in(?:utes?)?)?)?|(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)|(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*\s+\d{1,2}:\d{2}\s*(?:AM|PM)|[A-Z][a-z]{2}\s+\d{1,2}(?:,\s*\d{4})?\s+(?:at\s+)?\d{1,2}:\d{2}\s*(?:AM|PM))/i)?.[0] || "";
                 return {
                   windowId: label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_${'$'}/g, ""),
                   label: /week/i.test(label) ? "Weekly" : "Current session",

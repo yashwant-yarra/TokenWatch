@@ -18,7 +18,8 @@ const el = (tag, ...kids) => {
   Object.defineProperty(n, "innerText", { get: () => kids.map(k => typeof k === "string" ? k : k.innerText).join("\n") });
   return n;
 };
-const all = (n, tag, out = []) => { if (n.tag === tag) out.push(n); n.kids.forEach(k => typeof k === "object" && all(k, tag, out)); return out; };
+// `tags` is a selector list of tag names, like "p, strong".
+const all = (n, tags, out = []) => { if (tags.split(/\s*,\s*/).includes(n.tag)) out.push(n); n.kids.forEach(k => typeof k === "object" && all(k, tags, out)); return out; };
 // `extras` adds the document lookups an account reader uses (getElementById, querySelector).
 const run = (root, sel, pat, plan, headingPlan, account, extras = {}) => {
   body = root;
@@ -100,6 +101,23 @@ if (require.main === module) {
   assert.ok(Math.abs(Date.parse(xs.resetsAt) - (now + 5 * 3600000)) < 5000);
   assert.equal(xw.percent, 93); assert.equal(xw.percentMeaning, "REMAINING");
   assert.ok(Math.abs(Date.parse(xw.resetsAt) - (now + (5 * 24 + 18) * 3600000)) < 5000, "\"in 5d 18h\" is read: " + xw.resetsAt);
+  // Under an hour left, the reset has no hours part ("Resets in 31m", "Resets in 45 min").
+  const xm = run(el("body", el("div", el("div", "5-hour limit"), "Resets in 31m", "56% left")), "div", "5-hour limit|weekly limit");
+  assert.ok(Math.abs(Date.parse(xm.windows[0].resetsAt) - (now + 31 * 60000)) < 5000, "\"in 31m\" is read: " + xm.windows[0].resetsAt);
+  const cm = run(el("body", el("section", el("div", "Current session", "Resets in 45 min", "80% used"))), "section", "current session|weekly", "Pro|Max");
+  assert.ok(Math.abs(Date.parse(cm.windows[0].resetsAt) - (now + 45 * 60000)) < 5000, "\"in 45 min\" is read");
+  // Gemini (2026-10): labels and values are <strong>, resets are <span>, grouped in sections.
+  const gs = run(el("body", el("section", el("div", el("strong", "Usage limits"), el("span", "PRO")),
+    el("section", el("div", el("div", el("strong", "Current usage"), "info"), el("strong", "11% used")), el("span", "Resets at 4:07 PM")),
+    el("section", el("div", el("span", el("strong", "Weekly limit"), el("span", "Resets Oct 29 at 10:07 PM")), el("strong", "7% used"))))),
+    "p, strong", "current usage|weekly limit", null, geminiPlan);
+  console.log(JSON.stringify(gs));
+  assert.equal(gs.windows.length, 2);
+  assert.equal(gs.windows.find(w => w.label === "Current session").percent, 11);
+  assert.ok(gs.windows.find(w => w.label === "Current session").resetsAt);
+  assert.equal(gs.windows.find(w => w.label === "Weekly").percent, 7);
+  assert.ok(gs.windows.find(w => w.label === "Weekly").resetsAt);
+  assert.equal(gs.planName, "Pro");
   // Claude: plan read from its quota block.
   assert.equal(run(el("body", el("section", el("div", "Plan usage limits", "Max"), el("div", "Current session", "Resets in 1 hr", "5% used"))),
     "section", "current session|weekly", "Pro|Max").planName, "Max");
