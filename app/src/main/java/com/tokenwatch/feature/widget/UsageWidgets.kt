@@ -125,9 +125,9 @@ object UsageWidgets {
         val android = bitmap.asAndroidBitmap()
         val draw = Canvas(android)
         val x = 28 * density
-        // Provider mark above the numeral. The OpenAI mark is monochrome, so it follows the text color.
+        // Provider mark above the numeral. The OpenAI and Copilot marks are monochrome, so they follow the text color.
         val logo = context.getDrawable(logoFor(meter.provider))!!.mutate()
-        if (meter.provider == AiProvider.CODEX) logo.setTint(context.getColor(R.color.widget_text))
+        if (meter.provider == AiProvider.CODEX || meter.provider == AiProvider.COPILOT) logo.setTint(context.getColor(R.color.widget_text))
         logo.setBounds(x.toInt(), (4 * density).toInt(), (x + 13 * density).toInt(), (17 * density).toInt())
         logo.draw(draw)
         val engraved = ResourcesCompat.getFont(context, R.font.barlow_condensed_semibold)
