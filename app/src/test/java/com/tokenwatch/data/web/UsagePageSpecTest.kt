@@ -58,6 +58,14 @@ class UsagePageSpecTest {
     }
 
     @Test
+    fun `Copilot allows GitHub sign-in`() {
+        val spec = UsagePageSpec.forProvider(AiProvider.COPILOT)
+        assertTrue(spec.allows("https://github.com/login?return_to=%2Fsettings%2Fbilling%2Fai_usage"))
+        assertTrue(spec.allows("https://github.com/sessions/two-factor"))
+        assertFalse(spec.allows("https://github.com.example.com/login"))
+    }
+
+    @Test
     fun `only Gemini keeps its own cookie store`() {
         assertEquals("gemini", UsagePageSpec.forProvider(AiProvider.GEMINI).webProfile)
         assertEquals(null, UsagePageSpec.forProvider(AiProvider.CLAUDE).webProfile)

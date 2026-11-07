@@ -13,6 +13,7 @@ enum class AiProvider(val displayName: String) {
     CLAUDE("Claude"),
     CODEX("Codex"),
     GEMINI("Gemini"),
+    COPILOT("Copilot"),
 }
 
 /** How real the data behind an integration is. Shown to the user on every provider. */
@@ -83,7 +84,12 @@ data class TokenUsageBucket(
 }
 
 @Serializable
-enum class QuotaWindowType { ROLLING_HOURS, DAILY, WEEKLY, MONTHLY, OTHER }
+enum class QuotaWindowType {
+    ROLLING_HOURS, DAILY, WEEKLY, MONTHLY, OTHER;
+
+    /** Weekly and monthly windows share the weekly alert limit; shorter ones count as a session. */
+    val usesWeeklyLimit: Boolean get() = this == WEEKLY || this == MONTHLY
+}
 
 /** A quota gauge tied to a window. Providers report a list of these; nothing is hard-coded. */
 @Serializable

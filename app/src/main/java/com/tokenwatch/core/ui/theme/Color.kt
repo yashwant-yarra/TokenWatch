@@ -32,18 +32,20 @@ internal object Bench {
     val LightOnAlertSlip = Color(0xFF5C0C1A)
 }
 
-// Each sand is the provider's own brand hue (Claude terracotta, OpenAI green, Gemini blue), tuned
+// Each sand is the provider's own brand hue (Claude terracotta, OpenAI green, Gemini blue, GitHub purple for Copilot), tuned
 // per ground: brighter on graphite, deeper on porcelain for at least 3:1 against it.
 object ProviderColors {
     private val light = mapOf(
         AiProvider.CLAUDE to Color(0xFFC15F3C),
         AiProvider.CODEX to Color(0xFF0A7F62),
         AiProvider.GEMINI to Color(0xFF2F6FD6),
+        AiProvider.COPILOT to Color(0xFF8250DF),
     )
     private val dark = mapOf(
         AiProvider.CLAUDE to Color(0xFFE08B6B),
         AiProvider.CODEX to Color(0xFF3CCB9C),
         AiProvider.GEMINI to Color(0xFF6FA8FF),
+        AiProvider.COPILOT to Color(0xFFA371F7),
     )
 
     /** The sand color for a provider's glasses. */

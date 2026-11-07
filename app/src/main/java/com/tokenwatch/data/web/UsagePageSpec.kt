@@ -19,6 +19,7 @@ data class UsagePageSpec(
         AiProvider.CLAUDE -> setOf("claude.ai", "anthropic.com")
         AiProvider.CODEX -> setOf("chatgpt.com", "openai.com")
         AiProvider.GEMINI -> setOf("gemini.google.com", "google.com")
+        AiProvider.COPILOT -> setOf("github.com")
     }
 
     /**
@@ -92,6 +93,14 @@ data class UsagePageSpec(
                 // back to the usage page instead.
                 signInUrl = "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fgemini.google.com%2Fusage",
             )
+            AiProvider.COPILOT -> UsagePageSpec(
+                provider,
+                // Signed out, this redirects to github.com/login and returns here afterwards.
+                "https://github.com/settings/billing/ai_usage",
+                // GitHub's sign-in page also offers Google and Apple.
+                setOf("github.com", "appleid.apple.com") + GOOGLE_SIGN_IN,
+                COPILOT_SCRIPT,
+            )
         }
 
         // Account readers: a JS expression giving the signed-in email the page itself holds, or null.
@@ -132,6 +141,33 @@ data class UsagePageSpec(
               return match ? match[1] : null;
             })()
         """
+
+        // Copilot counts AI credits, not percentages. Its "Included credits" card reads
+        // "Included credits / Copilot Pro / 0 / 1,500 AI credits / Resets in 24 days on Dec 1, 2026" (seen 2026-11-07).
+        // shortcut: the page gives only the reset date, so it's read as 00:00 UTC; take the time from the page if it ever shows one.
+        private val COPILOT_SCRIPT = """
+            (() => {
+              const clean = value => (value || "").replace(/\s+/g, " ").trim();
+              const card = [...document.querySelectorAll("div")].map(node => clean(node.innerText))
+                .filter(text => /^included credits\b/i.test(text) && /ai credits/i.test(text))
+                .sort((a, b) => a.length - b.length)[0];
+              const amounts = card?.match(/([\d,.]+)\s*\/\s*([\d,.]+)\s*AI credits/i);
+              if (!amounts) return null;
+              const used = Number(amounts[1].replace(/,/g, "")), limit = Number(amounts[2].replace(/,/g, ""));
+              if (!(limit > 0) || Number.isNaN(used)) return null;
+              const resetDate = card.match(/resets\b.*?\bon\s+([A-Z][a-z]+\s+\d{1,2},\s*\d{4})/i)?.[1];
+              const reset = resetDate ? Date.parse(resetDate + " 00:00 UTC") : NaN;
+              const planName = card.match(/^included credits\s+(.{1,64}?)\s+[\d,.]+\s*\//i)?.[1] || null;
+              return JSON.stringify({schemaVersion: 1, planName, accountLabel: null, windows: [{
+                windowId: "monthly_credits",
+                label: "Monthly credits",
+                windowType: "MONTHLY",
+                percent: Math.min(100, used / limit * 100),
+                percentMeaning: "USED",
+                resetsAt: Number.isNaN(reset) ? null : new Date(reset).toISOString()
+              }]});
+            })()
+        """.trimIndent()
 
         private fun extractionScript(
             selector: String,

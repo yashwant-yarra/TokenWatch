@@ -21,12 +21,11 @@ import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AppSettings
 import com.tokenwatch.domain.model.ProviderSnapshot
 import com.tokenwatch.domain.model.QuotaWindow
-import com.tokenwatch.domain.model.QuotaWindowType
 import java.time.Instant
 
 /** The user's alert limits (percent used), drawn as a line on every glass. Null when alerts are off. */
 data class AlertLimits(val session: Int, val weekly: Int) {
-    fun forWindow(window: QuotaWindow): Int = if (window.windowType == QuotaWindowType.WEEKLY) weekly else session
+    fun forWindow(window: QuotaWindow): Int = if (window.windowType.usesWeeklyLimit) weekly else session
 }
 
 fun AppSettings.alertLimits(): AlertLimits? =
@@ -139,9 +138,11 @@ fun GlassRack(
     modifier: Modifier = Modifier,
     spinning: Boolean = false,
 ) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    // A lone window (Copilot's monthly credits) is centered; in the left half it reads as a missing second limit.
+    val single = windows.size == 1
+    Row(modifier.fillMaxWidth(), horizontalArrangement = if (single) Arrangement.Center else Arrangement.spacedBy(16.dp)) {
         windows.sortedBy { it.windowType }.forEach { window ->
-            GlassReading(window, sand, now, limits, stale, tall, Modifier.weight(1f), spinning)
+            GlassReading(window, sand, now, limits, stale, tall, if (single) Modifier else Modifier.weight(1f), spinning)
         }
     }
 }

@@ -15,8 +15,8 @@ class WebSessionSignOutTest {
     }
 
     @Test
-    fun signingOutOfClaudeOrCodexLeavesSharedSignInAlone() {
-        listOf(AiProvider.CLAUDE, AiProvider.CODEX).forEach { provider ->
+    fun signingOutOfClaudeCodexOrCopilotLeavesSharedSignInAlone() {
+        listOf(AiProvider.CLAUDE, AiProvider.CODEX, AiProvider.COPILOT).forEach { provider ->
             val domains = UsagePageSpec.forProvider(provider).sessionDomains
             assertFalse(provider.name, domains.any { it.endsWith("google.com") || it.endsWith("apple.com") })
         }

@@ -100,7 +100,7 @@ fun DashboardContent(
                 glyph = null,
                 art = { SandGlass(leftPercent = null, sand = MaterialTheme.colorScheme.onSurface, width = 48.dp, height = 88.dp) },
                 title = "No accounts connected yet",
-                message = "Connect Claude, Codex or Gemini to see how much of each limit is left and when it comes back.",
+                message = "Connect Claude, Codex, Gemini or Copilot to see how much of each limit is left and when it comes back.",
                 actionLabel = "Connect an account",
                 onAction = onOpenConnections,
                 modifier = modifier,

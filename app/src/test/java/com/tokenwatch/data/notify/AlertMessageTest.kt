@@ -42,6 +42,12 @@ class AlertMessageTest {
     }
 
     @Test
+    fun monthlyWindowIsCalledMonthly() {
+        assertEquals("Copilot monthly usage at 80%", alertMessage("Copilot", alert(QuotaWindowType.MONTHLY, 80.0, null), now)!!.title)
+        assertEquals("Copilot monthly limit reached", alertMessage("Copilot", alert(QuotaWindowType.MONTHLY, 100.0, null), now)!!.title)
+    }
+
+    @Test
     fun aResetThatAlreadyPassedIsLeftOut() {
         val message = alertMessage("Claude", alert(QuotaWindowType.WEEKLY, 82.0, Duration.ofMinutes(-5)), now)!!
         assertEquals("Claude weekly usage at 82%", message.title)

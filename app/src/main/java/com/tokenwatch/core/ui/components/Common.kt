@@ -72,9 +72,9 @@ fun ProviderMark(provider: AiProvider, size: Dp = 22.dp) {
     when (provider) {
         AiProvider.CLAUDE -> Image(painterResource(R.drawable.ic_provider_claude), null, Modifier.size(size))
         AiProvider.GEMINI -> Image(painterResource(R.drawable.ic_provider_gemini), null, Modifier.size(size))
-        // The OpenAI mark is monochrome, so it follows the theme's text color.
-        AiProvider.CODEX -> Image(
-            painterResource(R.drawable.ic_provider_codex),
+        // The OpenAI and Copilot marks are monochrome, so they follow the theme's text color.
+        AiProvider.CODEX, AiProvider.COPILOT -> Image(
+            painterResource(if (provider == AiProvider.CODEX) R.drawable.ic_provider_codex else R.drawable.ic_provider_copilot),
             null,
             Modifier.size(size),
             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),

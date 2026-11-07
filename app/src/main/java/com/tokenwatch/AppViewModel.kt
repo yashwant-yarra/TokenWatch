@@ -29,9 +29,8 @@ class AppViewModel @Inject constructor(
         settingsRepository.settings.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     init {
-        viewModelScope.launch {
-            if (usageRepository.snapshots.first().isEmpty()) usageRepository.refreshAll()
-        }
+        // Every launch, not just the first: refreshAll adds only providers that are missing, such as one new in an update.
+        viewModelScope.launch { usageRepository.refreshAll() }
         viewModelScope.launch {
             // Restores the chain if it was lost (for example after a force stop); keeps it otherwise.
             BackgroundRefresh.schedule(context, settingsRepository.settings.first().refreshIntervalMinutes, restart = false)

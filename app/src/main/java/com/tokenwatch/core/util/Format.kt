@@ -3,6 +3,7 @@ package com.tokenwatch.core.util
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
@@ -41,7 +42,9 @@ object Format {
         return when {
             remaining.isNegative || remaining.isZero -> "Window has reset since this was fetched"
             remaining < Duration.ofDays(2) -> "Resets in ${duration(remaining)}"
-            else -> "Resets " + resetsAt.atZone(zone).dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+            remaining < Duration.ofDays(7) -> "Resets " + resetsAt.atZone(zone).dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+            // A weekday alone would read as this week, so longer windows (monthly) show the date.
+            else -> "Resets " + DateTimeFormatter.ofPattern("MMM d", Locale.getDefault()).format(resetsAt.atZone(zone))
         }
     }
 

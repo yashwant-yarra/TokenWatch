@@ -1,8 +1,8 @@
 # TokenWatch
 
 Kotlin, Jetpack Compose, Material 3, MVVM, Hilt, Room, DataStore, Navigation Compose.
-Private Android app that reads subscription quota from the signed-in Claude, Codex, and Gemini
-usage pages. Extracted percentages and reset times stay on-device in Room.
+Private Android app that reads subscription quota from the signed-in Claude, Codex, Gemini, and
+GitHub Copilot usage pages. Extracted percentages and reset times stay on-device in Room.
 
 ## Run
 

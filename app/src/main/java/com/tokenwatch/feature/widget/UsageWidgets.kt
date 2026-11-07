@@ -49,11 +49,14 @@ data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?) {
 
 /** One meter per provider, always in the same order, so glasses never swap places. */
 fun widgetMeters(snapshots: List<ProviderSnapshot>, kind: WidgetKind): List<WidgetMeter> =
-    AiProvider.entries.map { provider ->
+    WIDGET_PROVIDERS.map { provider ->
         val snapshot = snapshots.firstOrNull { it.provider == provider }?.takeIf { it.isActive }
         val window = snapshot?.quotaWindows?.firstOrNull { it.windowType in kind.types }
         WidgetMeter(provider, window?.usedPercent)
     }
+
+// Copilot reports only a monthly window, which neither widget shows, so it would always be an empty glass.
+private val WIDGET_PROVIDERS = AiProvider.entries - AiProvider.COPILOT
 
 object UsageWidgets {
     private val meterIds = listOf(R.id.meter_0, R.id.meter_1, R.id.meter_2)
@@ -151,6 +154,7 @@ object UsageWidgets {
         AiProvider.CLAUDE -> R.drawable.ic_provider_claude
         AiProvider.CODEX -> R.drawable.ic_provider_codex
         AiProvider.GEMINI -> R.drawable.ic_provider_gemini
+        AiProvider.COPILOT -> R.drawable.ic_provider_copilot
     }
 
     private fun receiverFor(kind: WidgetKind) = when (kind) {

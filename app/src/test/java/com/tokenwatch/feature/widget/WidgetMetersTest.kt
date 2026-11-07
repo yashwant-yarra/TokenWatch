@@ -35,7 +35,8 @@ class WidgetMetersTest {
         )
         assertEquals(listOf(38.0, null, 1.0), widgetMeters(snapshots, WidgetKind.SESSION).map { it.usedPercent })
         assertEquals(listOf(35.0, null, 5.0), widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.usedPercent })
-        assertEquals(AiProvider.entries, widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.provider })
+        // Copilot is left out: it has only a monthly window, which neither widget shows.
+        assertEquals(listOf(AiProvider.CLAUDE, AiProvider.CODEX, AiProvider.GEMINI), widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.provider })
     }
 
     @Test

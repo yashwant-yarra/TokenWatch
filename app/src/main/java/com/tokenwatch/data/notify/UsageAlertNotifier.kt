@@ -124,11 +124,11 @@ class UsageAlertNotifier @Inject constructor(
  */
 internal fun alertMessage(providerName: String, alert: UsageAlert, now: Instant): UsageAlertNotifier.AlertMessage? {
     val used = alert.window.usedPercent ?: return null
-    val kind = if (alert.isWeekly) "weekly" else "session"
+    val kind = windowKind(alert.window)
     val title = when {
         used >= 100 -> "$providerName $kind limit reached"
-        alert.isWeekly -> "$providerName weekly usage at ${Format.percent(used)}"
-        else -> "$providerName session at ${Format.percent(used)}"
+        kind == SESSION -> "$providerName session at ${Format.percent(used)}"
+        else -> "$providerName $kind usage at ${Format.percent(used)}"
     }
     // A reset that has already passed would be stale news, so it's left out.
     val reset = alert.window.resetsAt?.takeIf { it.isAfter(now) }
@@ -142,9 +142,18 @@ internal fun alertMessage(providerName: String, alert: UsageAlert, now: Instant)
  * says only that usage is available again, never a made-up number.
  */
 internal fun resetMessage(providerName: String, window: QuotaWindow, now: Instant): UsageAlertNotifier.AlertMessage {
-    val title = if (window.windowType == QuotaWindowType.WEEKLY) "$providerName weekly limit reset" else "$providerName session reset"
+    val kind = windowKind(window)
+    val title = if (kind == SESSION) "$providerName session reset" else "$providerName $kind limit reset"
     val left = window.usedPercent?.let { "${Format.percent((100.0 - it).coerceIn(0.0, 100.0))} left" }
     val next = window.resetsAt?.takeIf { it.isAfter(now) }?.let { Format.resetLabel(it, now).replaceFirst("Resets", "next reset") }
     val text = listOfNotNull(left, next).joinToString(" · ").ifEmpty { "Usage is available again" }
     return UsageAlertNotifier.AlertMessage(title, text)
+}
+
+private const val SESSION = "session"
+
+private fun windowKind(window: QuotaWindow) = when (window.windowType) {
+    QuotaWindowType.WEEKLY -> "weekly"
+    QuotaWindowType.MONTHLY -> "monthly"
+    else -> SESSION
 }

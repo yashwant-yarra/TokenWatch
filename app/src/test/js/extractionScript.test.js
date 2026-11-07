@@ -134,6 +134,19 @@ if (require.main === module) {
   assert.equal(run(geminiBlock, "p", "current usage|weekly limit", null, null, geminiAccount, label("Google Account: Dev Person")).accountLabel, null, "a label without an address gives no account");
   // Providers without an account reader report none.
   assert.equal(run(geminiBlock, "p", "current usage|weekly limit").accountLabel, null);
+  // Copilot (github.com/settings/billing/ai_usage, 2026-11): an "Included credits" card with used / limit and a reset date.
+  const copilotScript = kt.match(/val COPILOT_SCRIPT = """([\s\S]*?)"""/)[1];
+  const copilot = card => { global.document = { querySelectorAll: s => all(card, s) }; return JSON.parse(eval(copilotScript)); };
+  const cp = copilot(el("body", el("div", el("div", el("p", "Included credits", "Copilot Pro"), "375", "/ 1,500 AI credits", "Resets in 24 days on Dec 1, 2026"),
+    el("div", el("p", "Additional usage"), "$0", "/ $0 budget"))));
+  console.log(JSON.stringify(cp));
+  assert.equal(cp.planName, "Copilot Pro");
+  assert.equal(cp.windows.length, 1);
+  assert.equal(cp.windows[0].percent, 25);
+  assert.equal(cp.windows[0].windowType, "MONTHLY");
+  assert.equal(cp.windows[0].resetsAt, "2026-12-01T00:00:00.000Z");
+  global.document = { querySelectorAll: s => all(el("body", el("div", "Loading")), s) };
+  assert.equal(eval(copilotScript), null, "no card yet gives no reading");
   // Claude: the address comes from the page's own account data, which loads asynchronously. The first
   // poll starts the lookup and holds the reading back; the next poll reports it with the address.
   (async () => {

@@ -14,6 +14,7 @@ verified yet; the app currently runs on sample data only.
 | Codex | Codex CLI local session data (desktop companion) | n/a (local) | | | | | | | | MOCK |
 | Gemini | Subscription quota via Google OAuth | UNVERIFIED | | | | | | | UNVERIFIED | MOCK |
 | Gemini | Cloud billing export / monitoring (API usage) | UNVERIFIED | | | | | | | | MOCK |
+| Copilot | Signed-in page github.com/settings/billing/ai_usage ("Included credits" card, seen 2026-11-07) | GitHub web sign-in | | used / limit AI credits | date only ("Resets ... on Dec 1, 2026"); time of day UNVERIFIED, read as 00:00 UTC | | | | UNVERIFIED | WEB_PAGE |
 
 ## Enabling a real provider
 

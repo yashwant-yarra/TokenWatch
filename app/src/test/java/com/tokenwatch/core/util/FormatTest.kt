@@ -24,6 +24,15 @@ class FormatTest {
     }
 
     @Test
+    fun resetsWithinAWeekNameTheDayAndLaterOnesTheDate() {
+        val now = Instant.parse("2026-11-07T12:00:00Z") // a Saturday
+        val utc = java.time.ZoneOffset.UTC
+        java.util.Locale.setDefault(java.util.Locale.US)
+        assertEquals("Resets Tuesday", Format.resetLabel(Instant.parse("2026-11-10T09:00:00Z"), now, utc))
+        assertEquals("Resets Dec 1", Format.resetLabel(Instant.parse("2026-12-01T00:00:00Z"), now, utc))
+    }
+
+    @Test
     fun agoUsesSingularAndPlural() {
         val now = Instant.parse("2026-09-18T12:00:00Z")
         assertEquals("just now", Format.ago(now.minusSeconds(20), now))
