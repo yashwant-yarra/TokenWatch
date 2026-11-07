@@ -118,6 +118,7 @@ private fun UsageWebView(
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         onDispose {
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            flushCookies(spec)
             webView.stopLoading()
             webView.destroy()
         }
@@ -258,6 +259,13 @@ internal fun WebView.configureForUsagePage(
 }
 
 /** Runs [spec]'s extraction script; [onResult] gets the payload, or null if the page had none. */
+/**
+ * Writes [spec]'s cookies to disk now. The web view otherwise saves them only now and then, so a sign-in
+ * was lost when the phone closed the app soon after (seen with GitHub, 2026-11). Main thread only.
+ */
+internal fun flushCookies(spec: UsagePageSpec) =
+    (webProfileOf(spec)?.cookieManager ?: CookieManager.getInstance()).flush()
+
 internal fun WebView.extract(spec: UsagePageSpec, onResult: (String?) -> Unit) =
     evaluateJavascript(spec.extractionScript) { result ->
         onResult(runCatching { JSONTokener(result).nextValue() as? String }.getOrNull())

@@ -64,6 +64,7 @@ private fun HiddenUsageReader(provider: AiProvider, viewModel: UsageRefreshViewM
     }
     DisposableEffect(webView) {
         onDispose {
+            flushCookies(spec)
             webView.stopLoading()
             webView.destroy()
         }
@@ -89,9 +90,9 @@ internal suspend fun WebView.readUsage(spec: UsagePageSpec, save: suspend (Strin
     repeat(MAX_POLLS) {
         delay(2_000)
         val url = url?.let(Uri::parse)
-        if (url != null && url.host == usageHost && !url.isSignedOutPage()) {
+        val payload = if (url != null && url.host == usageHost && !url.isSignedOutPage()) extractNow(spec) else UsagePageSpec.SIGNED_OUT
+        if (payload != UsagePageSpec.SIGNED_OUT) {
             signedOutPolls = 0
-            val payload = extractNow(spec)
             if (payload != null && save(payload)) return null
         } else if (++signedOutPolls >= SIGNED_OUT_POLLS) {
             // Redirects pass through sign-in pages briefly, so only staying on one means signed out.

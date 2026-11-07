@@ -42,6 +42,9 @@ data class UsagePageSpec(
         // Google sign-in ends by setting its cookies on accounts.youtube.com and then on the country's own
         // sign-in address (accounts.google.co.in in India); blocking either leaves sign-in hanging after
         // 2-step verification.
+        /** What a reader answers when the page itself says nobody is signed in. */
+        const val SIGNED_OUT = "signed-out"
+
         private const val GOOGLE_HOST = "accounts.google.com"
         private val GOOGLE_SIGN_IN = setOf(GOOGLE_HOST, "accounts.youtube.com")
 
@@ -145,8 +148,11 @@ data class UsagePageSpec(
         // Copilot counts AI credits, not percentages. Its "Included credits" card reads
         // "Included credits / Copilot Pro / 0 / 1,500 AI credits / Resets in 24 days on Dec 1, 2026" (seen 2026-11-07).
         // shortcut: the page gives only the reset date, so it's read as 00:00 UTC; take the time from the page if it ever shows one.
+        // Signed out, GitHub shows a "Need to sign in?" 404 at this same address instead of redirecting to login.
         private val COPILOT_SCRIPT = """
             (() => {
+              const login = document.querySelector('meta[name="user-login"]');
+              if (login && !login.content) return "$SIGNED_OUT";
               const clean = value => (value || "").replace(/\s+/g, " ").trim();
               const card = [...document.querySelectorAll("div")].map(node => clean(node.innerText))
                 .filter(text => /^included credits\b/i.test(text) && /ai credits/i.test(text))

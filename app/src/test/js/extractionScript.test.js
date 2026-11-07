@@ -135,8 +135,10 @@ if (require.main === module) {
   // Providers without an account reader report none.
   assert.equal(run(geminiBlock, "p", "current usage|weekly limit").accountLabel, null);
   // Copilot (github.com/settings/billing/ai_usage, 2026-11): an "Included credits" card with used / limit and a reset date.
-  const copilotScript = kt.match(/val COPILOT_SCRIPT = """([\s\S]*?)"""/)[1];
-  const copilot = card => { global.document = { querySelectorAll: s => all(card, s) }; return JSON.parse(eval(copilotScript)); };
+  const signedOut = kt.match(/const val SIGNED_OUT = "(.*)"/)[1];
+  const copilotScript = kt.match(/val COPILOT_SCRIPT = """([\s\S]*?)"""/)[1].replace(/\$SIGNED_OUT/g, signedOut);
+  const login = name => ({ querySelector: q => q.includes("user-login") ? { content: name } : null });
+  const copilot = card => { global.document = { querySelectorAll: s => all(card, s), ...login("dev") }; return JSON.parse(eval(copilotScript)); };
   const cp = copilot(el("body", el("div", el("div", el("p", "Included credits", "Copilot Pro"), "375", "/ 1,500 AI credits", "Resets in 24 days on Dec 1, 2026"),
     el("div", el("p", "Additional usage"), "$0", "/ $0 budget"))));
   console.log(JSON.stringify(cp));
@@ -145,8 +147,11 @@ if (require.main === module) {
   assert.equal(cp.windows[0].percent, 25);
   assert.equal(cp.windows[0].windowType, "MONTHLY");
   assert.equal(cp.windows[0].resetsAt, "2026-12-01T00:00:00.000Z");
-  global.document = { querySelectorAll: s => all(el("body", el("div", "Loading")), s) };
+  global.document = { querySelectorAll: s => all(el("body", el("div", "Loading")), s), querySelector: () => null };
   assert.equal(eval(copilotScript), null, "no card yet gives no reading");
+  // Signed out, GitHub serves a 404 at the usage address with an empty user-login.
+  global.document = { querySelectorAll: s => all(el("body", el("div", "Didn't find anything here! Need to sign in?")), s), ...login("") };
+  assert.equal(eval(copilotScript), signedOut, "an empty user-login reads as signed out");
   // Claude: the address comes from the page's own account data, which loads asynchronously. The first
   // poll starts the lookup and holds the reading back; the next poll reports it with the address.
   (async () => {
