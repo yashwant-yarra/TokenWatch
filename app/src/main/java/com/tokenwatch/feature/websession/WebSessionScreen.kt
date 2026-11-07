@@ -14,6 +14,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.webkit.WebViewCompat
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -188,6 +189,9 @@ internal fun WebView.configureForUsagePage(
 ) {
     // Must come before anything else touches this web view.
     webProfileOf(spec)?.let { WebViewCompat.setProfile(this, it.name) }
+    // AndroidView otherwise gives WRAP_CONTENT, and a wrap-content web view measures 100vh/100svh as 0.
+    // ChatGPT's login sets body { height: 100svh }, so its whole form collapsed to a blank page.
+    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
     // Inspectable from a computer in debug builds only, for fixing page readers; never in release.
     WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
     CookieManager.getInstance().setAcceptCookie(true)
