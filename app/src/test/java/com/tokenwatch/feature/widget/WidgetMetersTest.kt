@@ -32,11 +32,13 @@ class WidgetMetersTest {
             // Listed out of order and with weekly first, like the page reader can return them.
             snapshot(AiProvider.GEMINI, ConnectionStatus.CONNECTED, QuotaWindowType.WEEKLY to 5.0, QuotaWindowType.ROLLING_HOURS to 1.0),
             snapshot(AiProvider.CLAUDE, ConnectionStatus.CONNECTED, QuotaWindowType.WEEKLY to 35.0, QuotaWindowType.ROLLING_HOURS to 38.0),
+            snapshot(AiProvider.COPILOT, ConnectionStatus.CONNECTED, QuotaWindowType.MONTHLY to 25.0),
         )
+        // Copilot has only a monthly window: it sits on the weekly widget and is left off the session one.
         assertEquals(listOf(38.0, null, 1.0), widgetMeters(snapshots, WidgetKind.SESSION).map { it.usedPercent })
-        assertEquals(listOf(35.0, null, 5.0), widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.usedPercent })
-        // Copilot is left out: it has only a monthly window, which neither widget shows.
-        assertEquals(listOf(AiProvider.CLAUDE, AiProvider.CODEX, AiProvider.GEMINI), widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.provider })
+        assertEquals(listOf(35.0, null, 5.0, 25.0), widgetMeters(snapshots, WidgetKind.WEEKLY).map { it.usedPercent })
+        assertEquals(AiProvider.entries - AiProvider.COPILOT, widgetMeters(snapshots, WidgetKind.SESSION).map { it.provider })
+        assertEquals("MONTHLY", widgetMeters(snapshots, WidgetKind.WEEKLY).last().windowLabel)
     }
 
     @Test

@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.compose.ui.graphics.Canvas as ComposeCanvas
 import android.graphics.Paint
+import android.view.View
 import android.widget.RemoteViews
 import com.tokenwatch.MainActivity
 import com.tokenwatch.R
@@ -37,29 +38,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-enum class WidgetKind(val title: String, val types: Set<QuotaWindowType>) {
-    SESSION("Current session", setOf(QuotaWindowType.ROLLING_HOURS, QuotaWindowType.DAILY)),
-    WEEKLY("Weekly", setOf(QuotaWindowType.WEEKLY)),
+/** Long windows (weekly or monthly) share a widget, grouped the way alert limits are. */
+enum class WidgetKind(val title: String, val includes: (QuotaWindowType) -> Boolean, val providers: List<AiProvider>) {
+    // Copilot has no session window, so it would always be an empty glass here.
+    SESSION("Current session", { it == QuotaWindowType.ROLLING_HOURS || it == QuotaWindowType.DAILY }, AiProvider.entries - AiProvider.COPILOT),
+    WEEKLY("Weekly", { it.usesWeeklyLimit }, AiProvider.entries),
 }
 
-/** One glass. A null percent means not connected or not reported, shown as an empty dashed glass, never as 0%. */
-data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?) {
+/**
+ * One glass. A null percent means not connected or not reported, shown as an empty dashed glass, never as 0%.
+ * [windowLabel] is the page's own name for the window ("Monthly credits"), when there is one.
+ */
+data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?, val windowLabel: String? = null) {
     val leftPercent: Double? get() = usedPercent?.let { (100.0 - it).coerceIn(0.0, 100.0) }
 }
 
 /** One meter per provider, always in the same order, so glasses never swap places. */
 fun widgetMeters(snapshots: List<ProviderSnapshot>, kind: WidgetKind): List<WidgetMeter> =
-    WIDGET_PROVIDERS.map { provider ->
+    kind.providers.map { provider ->
         val snapshot = snapshots.firstOrNull { it.provider == provider }?.takeIf { it.isActive }
-        val window = snapshot?.quotaWindows?.firstOrNull { it.windowType in kind.types }
-        WidgetMeter(provider, window?.usedPercent)
+        val window = snapshot?.quotaWindows?.firstOrNull { kind.includes(it.windowType) }
+        WidgetMeter(provider, window?.usedPercent, window?.label)
     }
 
-// Copilot reports only a monthly window, which neither widget shows, so it would always be an empty glass.
-private val WIDGET_PROVIDERS = AiProvider.entries - AiProvider.COPILOT
-
 object UsageWidgets {
-    private val meterIds = listOf(R.id.meter_0, R.id.meter_1, R.id.meter_2)
+    private val meterIds = listOf(R.id.meter_0, R.id.meter_1, R.id.meter_2, R.id.meter_3)
 
     /** Redraws every placed widget of both kinds. Called whenever cached usage changes. */
     fun updateAll(context: Context, snapshots: List<ProviderSnapshot>) {
@@ -73,12 +76,14 @@ object UsageWidgets {
     fun render(context: Context, kind: WidgetKind, snapshots: List<ProviderSnapshot>): RemoteViews {
         val isDark = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         val views = RemoteViews(context.packageName, R.layout.widget_usage)
-        widgetMeters(snapshots, kind).forEachIndexed { i, meter ->
+        val meters = widgetMeters(snapshots, kind)
+        views.setViewVisibility(R.id.meter_column_3, if (meters.size > 3) View.VISIBLE else View.GONE)
+        meters.forEachIndexed { i, meter ->
             val name = meter.provider.displayName
             views.setImageViewBitmap(meterIds[i], glass(context, meter, isDark))
             views.setContentDescription(
                 meterIds[i],
-                "$name ${kind.title.lowercase()}: " + (meter.leftPercent?.let { "${Format.percent(it)} left" } ?: "not available"),
+                "$name ${(meter.windowLabel ?: kind.title).lowercase()}: " + (meter.leftPercent?.let { "${Format.percent(it)} left" } ?: "not available"),
             )
         }
         val open = PendingIntent.getActivity(

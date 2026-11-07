@@ -10,8 +10,9 @@
 
     <!-- One glass with its reading, drawn as a single bitmap in UsageWidgets. -->
     <style name="WidgetMeter">
-        <item name="android:layout_width">64dp</item>
+        <!-- Fills its column and shrinks to fit when four glasses share a narrow widget (never grows past its bitmap). -->
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">56dp</item>
-        <item name="android:scaleType">fitCenter</item>
+        <item name="android:scaleType">centerInside</item>
     </style>
 </resources>
