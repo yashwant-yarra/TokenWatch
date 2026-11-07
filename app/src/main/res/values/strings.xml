@@ -5,4 +5,6 @@
     <string name="widget_session_description">Current session usage for Claude, Codex and Gemini</string>
     <string name="widget_weekly_name">Weekly &amp; monthly</string>
     <string name="widget_weekly_description">Weekly usage for Claude, Codex and Gemini, and Copilot\'s monthly credits</string>
+    <string name="widget_combined_name">Session &amp; weekly</string>
+    <string name="widget_combined_description">Current session as a glass and weekly usage as a bar, for every provider in one row</string>
 </resources>

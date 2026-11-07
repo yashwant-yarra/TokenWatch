@@ -23,13 +23,17 @@ import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.content.res.ResourcesCompat
+import com.tokenwatch.core.ui.components.AlertLimits
 import com.tokenwatch.core.ui.components.GlassLook
+import com.tokenwatch.core.ui.components.alertLimits
 import com.tokenwatch.core.ui.components.drawGlass
+import com.tokenwatch.core.ui.components.isPastLine
 import com.tokenwatch.core.ui.theme.ProviderColors
 import com.tokenwatch.core.util.Format
 import com.tokenwatch.domain.model.AiProvider
 import com.tokenwatch.domain.model.ProviderSnapshot
 import com.tokenwatch.domain.model.QuotaWindowType
+import com.tokenwatch.domain.repository.SettingsRepository
 import com.tokenwatch.domain.repository.UsageRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -43,47 +47,67 @@ enum class WidgetKind(val title: String, val includes: (QuotaWindowType) -> Bool
     // Copilot has no session window, so it would always be an empty glass here.
     SESSION("Current session", { it == QuotaWindowType.ROLLING_HOURS || it == QuotaWindowType.DAILY }, AiProvider.entries - AiProvider.COPILOT),
     WEEKLY("Weekly", { it.usesWeeklyLimit }, AiProvider.entries),
+    // Session as the glass and weekly as a bar; see combinedMeters.
+    COMBINED("Current session", SESSION.includes, AiProvider.entries),
 }
 
 /**
  * One glass. A null percent means not connected or not reported, shown as an empty dashed glass, never as 0%.
  * [windowLabel] is the page's own name for the window ("Monthly credits"), when there is one.
+ * [alertUsed] is the user's alert line for this window (null when alerts are off) and [pastLine] whether
+ * usage has crossed it, by the same rule as the app ([isPastLine]).
  */
-data class WidgetMeter(val provider: AiProvider, val usedPercent: Double?, val windowLabel: String? = null) {
+data class WidgetMeter(
+    val provider: AiProvider,
+    val usedPercent: Double?,
+    val windowLabel: String? = null,
+    val alertUsed: Int? = null,
+    val pastLine: Boolean = false,
+) {
     val leftPercent: Double? get() = usedPercent?.let { (100.0 - it).coerceIn(0.0, 100.0) }
 }
 
 /** One meter per provider, always in the same order, so glasses never swap places. */
-fun widgetMeters(snapshots: List<ProviderSnapshot>, kind: WidgetKind): List<WidgetMeter> =
+fun widgetMeters(snapshots: List<ProviderSnapshot>, kind: WidgetKind, limits: AlertLimits? = null): List<WidgetMeter> =
     kind.providers.map { provider ->
         val snapshot = snapshots.firstOrNull { it.provider == provider }?.takeIf { it.isActive }
         val window = snapshot?.quotaWindows?.firstOrNull { kind.includes(it.windowType) }
-        WidgetMeter(provider, window?.usedPercent, window?.label)
+        WidgetMeter(provider, window?.usedPercent, window?.label, window?.let { limits?.forWindow(it) }, window?.isPastLine(limits) == true)
+    }
+
+/**
+ * The combined widget's (glass, bar) per provider: the session window as the glass and the weekly one as
+ * the bar. A provider without a session window (Copilot's monthly credits) shows its long window in both.
+ */
+fun combinedMeters(snapshots: List<ProviderSnapshot>, limits: AlertLimits? = null): List<Pair<WidgetMeter, WidgetMeter>> =
+    widgetMeters(snapshots, WidgetKind.COMBINED, limits).zip(widgetMeters(snapshots, WidgetKind.WEEKLY, limits)) { session, weekly ->
+        (if (session.windowLabel != null) session else weekly) to weekly
     }
 
 object UsageWidgets {
     private val meterIds = listOf(R.id.meter_0, R.id.meter_1, R.id.meter_2, R.id.meter_3)
 
-    /** Redraws every placed widget of both kinds. Called whenever cached usage changes. */
-    fun updateAll(context: Context, snapshots: List<ProviderSnapshot>) {
+    /** Redraws every placed widget of every kind. Called whenever cached usage or the alert limits change. */
+    fun updateAll(context: Context, snapshots: List<ProviderSnapshot>, limits: AlertLimits?) {
         val manager = AppWidgetManager.getInstance(context)
         WidgetKind.entries.forEach { kind ->
             val ids = manager.getAppWidgetIds(ComponentName(context, receiverFor(kind)))
-            if (ids.isNotEmpty()) manager.updateAppWidget(ids, render(context, kind, snapshots))
+            if (ids.isNotEmpty()) manager.updateAppWidget(ids, render(context, kind, snapshots, limits))
         }
     }
 
-    fun render(context: Context, kind: WidgetKind, snapshots: List<ProviderSnapshot>): RemoteViews {
+    fun render(context: Context, kind: WidgetKind, snapshots: List<ProviderSnapshot>, limits: AlertLimits?): RemoteViews {
         val isDark = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         val views = RemoteViews(context.packageName, R.layout.widget_usage)
-        val meters = widgetMeters(snapshots, kind)
+        val meters = if (kind == WidgetKind.COMBINED) combinedMeters(snapshots, limits) else widgetMeters(snapshots, kind, limits).map { it to null }
         views.setViewVisibility(R.id.meter_column_3, if (meters.size > 3) View.VISIBLE else View.GONE)
-        meters.forEachIndexed { i, meter ->
-            val name = meter.provider.displayName
-            views.setImageViewBitmap(meterIds[i], glass(context, meter, isDark))
+        meters.forEachIndexed { i, (meter, bar) ->
+            views.setImageViewBitmap(meterIds[i], glass(context, meter, isDark, bar))
             views.setContentDescription(
                 meterIds[i],
-                "$name ${(meter.windowLabel ?: kind.title).lowercase()}: " + (meter.leftPercent?.let { "${Format.percent(it)} left" } ?: "not available"),
+                meter.provider.displayName + " " + describe(meter, kind.title) +
+                    // Copilot's glass and bar are the same window, so it's read once.
+                    (bar?.takeIf { it !== meter }?.let { ", " + describe(it, WidgetKind.WEEKLY.title) } ?: ""),
             )
         }
         val open = PendingIntent.getActivity(
@@ -96,9 +120,13 @@ object UsageWidgets {
         return views
     }
 
+    private fun describe(meter: WidgetMeter, fallback: String) =
+        "${(meter.windowLabel ?: fallback).lowercase()}: " + (meter.leftPercent?.let { "${Format.percent(it)} left" } ?: "not available")
+
     // A glass and its reading in one bitmap, drawn for the theme at render time with the app's own
-    // glass drawing; a light/dark switch shows on the next usage update.
-    private fun glass(context: Context, meter: WidgetMeter, isDark: Boolean): Bitmap {
+    // glass drawing; a light/dark switch shows on the next usage update. With [bar], the weekly bar
+    // takes the place of the "left" line.
+    private fun glass(context: Context, meter: WidgetMeter, isDark: Boolean, bar: WidgetMeter? = null): Bitmap {
         val density = context.resources.displayMetrics.density
         val bitmap = ImageBitmap((64 * density).toInt(), (56 * density).toInt())
         val canvas = ComposeCanvas(bitmap)
@@ -116,7 +144,8 @@ object UsageWidgets {
                 left = left?.let { (it / 100.0).toFloat().coerceIn(0f, 1f) },
                 sand = Color(ProviderColors.argb(meter.provider, isDark)),
                 look = look,
-                alertLeft = null,
+                // The user's alert line, drawn the same way as on the app's glasses.
+                alertLeft = meter.alertUsed?.let { (100 - it) / 100f },
                 stale = left == null,
             )
         }
@@ -131,8 +160,8 @@ object UsageWidgets {
         logo.setBounds(x.toInt(), (4 * density).toInt(), (x + 13 * density).toInt(), (17 * density).toInt())
         logo.draw(draw)
         val engraved = ResourcesCompat.getFont(context, R.font.barlow_condensed_semibold)
-        // Near the limit the numeral turns to the alert color, the same rule as the app without alert lines.
-        val nearLimit = left != null && left <= 10.0
+        // Past the user's alert line (or nearly full when alerts are off) the numeral turns to the alert color.
+        val nearLimit = meter.pastLine
         draw.drawText(
             left?.let(Format::percent) ?: "–",
             x,
@@ -143,15 +172,28 @@ object UsageWidgets {
                 color = context.getColor(if (nearLimit) R.color.widget_error else R.color.widget_text)
             },
         )
-        draw.drawText(
-            if (left == null) "n/a" else "left",
-            x,
-            50 * density,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                textSize = 10 * context.resources.displayMetrics.scaledDensity
-                color = context.getColor(R.color.widget_muted)
-            },
-        )
+        if (bar != null) {
+            // Track always; the fill only when weekly is known, so a missing reading never reads as 0%.
+            val top = 44 * density
+            val width = 32 * density
+            val radius = 2 * density
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.getColor(R.color.widget_muted); alpha = 90 }
+            draw.drawRoundRect(x, top, x + width, top + 4 * density, radius, radius, paint)
+            bar.leftPercent?.let { weeklyLeft ->
+                paint.color = if (bar.pastLine) context.getColor(R.color.widget_error) else ProviderColors.argb(bar.provider, isDark)
+                draw.drawRoundRect(x, top, x + width * (weeklyLeft / 100.0).toFloat(), top + 4 * density, radius, radius, paint)
+            }
+        } else {
+            draw.drawText(
+                if (left == null) "n/a" else "left",
+                x,
+                50 * density,
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    textSize = 10 * context.resources.displayMetrics.scaledDensity
+                    color = context.getColor(R.color.widget_muted)
+                },
+            )
+        }
         return android
     }
 
@@ -165,18 +207,21 @@ object UsageWidgets {
     private fun receiverFor(kind: WidgetKind) = when (kind) {
         WidgetKind.SESSION -> SessionWidgetReceiver::class.java
         WidgetKind.WEEKLY -> WeeklyWidgetReceiver::class.java
+        WidgetKind.COMBINED -> CombinedWidgetReceiver::class.java
     }
 }
 
 /** Draws a newly placed widget from the cache; later changes arrive through [UsageWidgets.updateAll]. */
 abstract class UsageWidgetReceiver(private val kind: WidgetKind) : AppWidgetProvider() {
     @Inject lateinit var repository: UsageRepository
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
             try {
-                manager.updateAppWidget(ids, UsageWidgets.render(context, kind, repository.snapshots.first()))
+                val limits = settingsRepository.settings.first().alertLimits()
+                manager.updateAppWidget(ids, UsageWidgets.render(context, kind, repository.snapshots.first(), limits))
             } finally {
                 pending.finish()
             }
@@ -189,3 +234,6 @@ class SessionWidgetReceiver : UsageWidgetReceiver(WidgetKind.SESSION)
 
 @AndroidEntryPoint
 class WeeklyWidgetReceiver : UsageWidgetReceiver(WidgetKind.WEEKLY)
+
+@AndroidEntryPoint
+class CombinedWidgetReceiver : UsageWidgetReceiver(WidgetKind.COMBINED)
