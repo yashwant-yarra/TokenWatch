@@ -115,11 +115,13 @@ class UsageHistoryTest {
             windowOf(AiProvider.CLAUDE, "current_session", QuotaWindowType.ROLLING_HOURS, 0, 40.0),
             windowOf(AiProvider.CLAUDE, "weekly", QuotaWindowType.WEEKLY, 0, 5.0),
             windowOf(AiProvider.CLAUDE, "current_session", QuotaWindowType.ROLLING_HOURS, 10, 45.0),
+            windowOf(AiProvider.COPILOT, "monthly_credits", QuotaWindowType.MONTHLY, 0, 25.0),
         )
         val session = combinedHistory(readings, WindowGroup.SESSION)
         assertEquals(listOf(AiProvider.CLAUDE, AiProvider.CODEX), session.map { it.provider })
         assertEquals(listOf(listOf(40.0, 45.0)), session.first().history.segments.map { seg -> seg.map { it.usedPercent } })
-        assertEquals(listOf(AiProvider.CLAUDE), combinedHistory(readings, WindowGroup.WEEKLY).map { it.provider })
+        // Monthly windows (Copilot's credits) sit with the weekly ones.
+        assertEquals(listOf(AiProvider.CLAUDE, AiProvider.COPILOT), combinedHistory(readings, WindowGroup.WEEKLY).map { it.provider })
     }
 
     @Test

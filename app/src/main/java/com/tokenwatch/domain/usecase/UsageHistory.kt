@@ -100,15 +100,18 @@ private fun resetBetween(before: QuotaWindow, usedBefore: Double, after: QuotaWi
     return null
 }
 
-/** Which windows the combined graph compares: session windows (rolling or daily) or weekly ones. */
+/**
+ * Which windows the combined graph compares: session windows (rolling or daily) or long ones (weekly or
+ * monthly, such as Copilot's credits), grouped the way alert limits are.
+ */
 enum class WindowGroup(val label: String) {
     SESSION("Session"),
-    WEEKLY("Weekly"),
+    WEEKLY("Weekly & monthly"),
     ;
 
     fun includes(type: QuotaWindowType): Boolean = when (this) {
         SESSION -> type == QuotaWindowType.ROLLING_HOURS || type == QuotaWindowType.DAILY
-        WEEKLY -> type == QuotaWindowType.WEEKLY
+        WEEKLY -> type.usesWeeklyLimit
     }
 }
 
